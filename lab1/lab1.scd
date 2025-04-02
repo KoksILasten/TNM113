@@ -1,3 +1,4 @@
+s.boot;
 //select code and use shift + enter to run.
 //Use camelCase for varibles otherwise it could cause an error
 
@@ -67,7 +68,57 @@ g.value(2, 2);
 
 (
 { var ampOsc;
-    ampOsc = SinOsc.kr(0.5, 1.5pi, 0.5, 0.5);
+    ampOsc = SinOsc.kr(0.5, 1.5, 0.5, 0.5);
     SinOsc.ar(440, 0, ampOsc);
 }.play;
 )
+(
+SynthDef.new(\coffeeTest,{
+	arg freq = 0.5;
+    var ampOsc;
+	ampOsc = SinOsc.kr(freq, 1.5, 0.5, 0.5);
+    SinOsc.ar(440, 0, ampOsc);
+}).add;
+)
+x = Synth.new(\coffeeTest);
+
+x.set(\freq,10);
+x.set(\freq,0.5);
+
+
+(
+f = SoundFile.new;
+f.openRead("D:/Repos/TNM113-Labs/lab1/playboi.mp3");
+postln(f.numChannels);
+postln(f.sampleRate);
+f = f.seek(origin:20);
+f.play;
+//f.seek(offset: 20, origin: 0).play;
+)
+
+(
+SynthDef.new(\millie,{
+	arg songStart=44100*3, playRate=1, pitchRatio=1.0;
+	// It's a proper audio file -- server can load it
+	b = Buffer.readChannel(s, "D:/Repos/TNM113-Labs/lab1/playboi.mp3",channels:[0]);
+
+
+// It's a sinewave...
+a =  (PlayBuf.ar(1, b, startPos:songStart, loop: 1, rate:playRate) * 0.1).dup ;
+
+a = PitchShift.ar(a,pitchRatio:pitchRatio, timeDispersion:0.1);
+
+	Out.ar(0,a);
+
+}).add;
+)
+x= Synth.new(\millie);
+
+x.set(\songStart,44100*4);
+x.set(\playRate,1);
+
+b.numFrames;
+x=b.numFrames;
+
+
+
