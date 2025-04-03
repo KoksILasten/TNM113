@@ -1,4 +1,5 @@
 s.boot;
+s.free;
 //select code and use shift + enter to run.
 //Use camelCase for varibles otherwise it could cause an error
 
@@ -88,7 +89,7 @@ x.set(\freq,0.5);
 
 (
 f = SoundFile.new;
-f.openRead("D:/Repos/TNM113-Labs/lab1/playboi.mp3");
+f.openRead("D:/Repos/TNM113-Labs/lab1/sfx/VattenRinna.aac");
 postln(f.numChannels);
 postln(f.sampleRate);
 f = f.seek(origin:20);
@@ -106,7 +107,7 @@ SynthDef.new(\millie,{
 // It's a sinewave...
 a =  (PlayBuf.ar(1, b, startPos:songStart, loop: 1, rate:playRate) * 0.1).dup ;
 
-a = PitchShift.ar(a,pitchRatio:pitchRatio, timeDispersion:0.1);
+//a = PitchShift.ar(a,pitchRatio:pitchRatio, timeDispersion:0.1);
 
 	Out.ar(0,a);
 
@@ -115,7 +116,8 @@ a = PitchShift.ar(a,pitchRatio:pitchRatio, timeDispersion:0.1);
 x= Synth.new(\millie);
 
 x.set(\songStart,44100*4);
-x.set(\playRate,1);
+x.set(\playRate,0.5);
+x.set(\pitchRatio,1);
 
 b.numFrames;
 x=b.numFrames;
