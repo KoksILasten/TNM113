@@ -27,6 +27,12 @@ SynthDef(\samplePlayer, { arg bufnum = 0;
 
 )
 
+x = {
+	var sig, env;
+	env = Line.kr(1,0,1);
+	sig = Pulse.ar(ExpRand(30,500))*env;
+}.play;
+
 
 
 
@@ -40,16 +46,19 @@ soundSample=soundSample*env;
 Synth.new(\samplePlayer, [\bufnum, soundSample]);
 
 )
-
+(
+Env.new.plot;
+)
 //----------------------------------------------------
 (
-var f, env;
-env = XLine.kr(1.0, 2.0, 1.0, doneAction:2);
-f = SoundFile(thisProcess.nowExecutingPath.dirname++"/sfx/BestickSlapp.wav")*env;
+var sig, f, env;
+env = XLine.kr(1.0, 0.01, 1.0, doneAction:2);
+env.plot;
+f = SoundFile(thisProcess.nowExecutingPath.dirname++"/sfx/BestickSlapp.wav",doneAction:0);
+sig = Pulse.ar(f)*env;
 postln(f.numChannels);
 postln(f.sampleRate);
-
-f.play;
+f.play*env;
 //f.seek(offset: 20, origin: 0).play;
 )
 
