@@ -121,6 +121,7 @@ Hur låter det? Hörs det att envelopen påverkar ljudets volymmässiga kontur?
 
 
 (
+
 fork({
 var playboi = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/playboi.mp3");
 c = Synth.new(\samplePlayer, [\bufnum, playboi]);
@@ -136,9 +137,10 @@ EnvGen.kr(
 	Env.perc(attackTime: 0.01, releaseTime: 0.5, level: 0.2, curve: -4.0);
 );
 )
-
+thisProcess.platform.recordingsDir = thisProcess.nowExecutingPath.dirname++"";
 
 // Klientside skript
+
 (
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
 
@@ -235,8 +237,10 @@ var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Vatt
 
 	});
 };
+s.record;
 ~coffeeSelector.(coffeeStrength, true);
 ~coffeeMaker.(coffeeStrength);
 
 )
 
+s.stopRecording;
