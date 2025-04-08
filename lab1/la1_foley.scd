@@ -29,7 +29,7 @@ SynthDef(\samplePlayer2, { arg bufnum=0,rate=1,freq=20000,channels=2,rq=1.0,loop
 }).add;
 )
 (
-SynthDef(\samplePlayer, { arg bufnum = 0,rate=1,freq=20000,channels=2,rq=1.0,loop=0;
+SynthDef(\samplePlayer, { arg bufnum = 0,rate=1,freq=20000,channels=2,rq=1.0,loop=0,atkTime=0.01;
     var sound = PlayBuf.ar(
 		numChannels: 2,
 		bufnum: bufnum,
@@ -41,7 +41,7 @@ SynthDef(\samplePlayer, { arg bufnum = 0,rate=1,freq=20000,channels=2,rq=1.0,loo
 	);
 
 	var filtered = RLPF.ar(sound, freq: freq, rq: rq);
-    var envelope = EnvGen.kr(Env.perc(0.01, 0.1, 1, -4),doneAction: 0);
+    var envelope = EnvGen.kr(Env.perc(atkTime, 0.1, 0.1, -4),doneAction: 0);
 	var output = filtered;
 
 	Out.ar(0, output ! 2);
@@ -121,7 +121,6 @@ Hur låter det? Hörs det att envelopen påverkar ljudets volymmässiga kontur?
 
 
 (
-
 fork({
 var playboi = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/playboi.mp3");
 c = Synth.new(\samplePlayer, [\bufnum, playboi]);
@@ -137,14 +136,14 @@ EnvGen.kr(
 	Env.perc(attackTime: 0.01, releaseTime: 0.5, level: 0.2, curve: -4.0);
 );
 )
-thisProcess.platform.recordingsDir = thisProcess.nowExecutingPath.dirname++"";
+
+thisProcess.platform.recordingsDir = thisProcess.nowExecutingPath.dirname++"/Results";
 
 // Klientside skript
-
 (
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
 
-var coffeeStrength = 3;
+var coffeeStrength = 1;
 
 var clickSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Reflex-click-02.wav");
 var clickholdSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Reflex-click-03.wav");
@@ -157,6 +156,7 @@ var rawrSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Audac
 var stoneScrapeSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Sten6.wav");
 var stoneRollSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Stenvagga.wav");
 var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/VattenRinna2.wav");
+var chairScrapeSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Stolskrap.wav");
 
 
 //postln(thisProcess.nowExecutingPath.dirname);
@@ -186,16 +186,18 @@ var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Vatt
 	fork({
 		s.sync;
 		3.0.wait;
-	/*
+
+		/*
 		{var noise = PinkNoise.ar();
 			var noiseFilter = LPF.ar(noise, freq: 800);
 			noiseFilter ! 2 * 0.5;
 		}.play;
 		*/
 
-		//k = Synth.new(\machineHum, [\amp, 0.15]);
+		n = Synth.new(\machineHum, [\amp, 0.15]);
 		k = Synth.new(\samplePlayer, [\bufnum, acSound, \channels, 1]);
-		k.set(\freq, 260);
+		k.set(\freq, 440);
+		k.set(\atkTime, 2.0);
 
 		b = Synth.new(\samplePlayer, [\bufnum, clickholdSound, \channels, 1]);
 		0.3.wait;
@@ -212,6 +214,9 @@ var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Vatt
 		h.set(\rate, 0.5);
 		h.set(\loop,1);
 		h.set(\rq, 0.3);
+		m = Synth.new(\samplePlayer, [\bufnum, chairScrapeSound, \channels, 1]);
+		m.set(\rate, 0.9);
+		m.set(\rq, 0.6);
 
 		3.0.wait;
 		d.free;
@@ -245,7 +250,6 @@ var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Vatt
 s.record;
 ~coffeeSelector.(coffeeStrength, true);
 ~coffeeMaker.(coffeeStrength);
-
 )
-
 s.stopRecording;
+
