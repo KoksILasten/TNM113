@@ -26,15 +26,16 @@ SynthDef(\samplePlayer, { arg bufnum = 0;
 }).add;
 
 )
-
+s.plotTree;
+(
 x = {
 	var sig, env;
-	env = Line.kr(1,0,1);
+	env = Line.kr(1,0,1,doneAction:2);
 	sig = Pulse.ar(ExpRand(30,500))*env;
 }.play;
 
-
-
+)
+s.freeAll;
 
 // Klientside skript
 (
@@ -69,9 +70,9 @@ SynthDef.new(\millie,{
 	//Read in an audiofile, for the server s, path, for channel 0(first channel)
 	b = Buffer.readChannel(s, "D:/Repos/TNM113-Labs/lab1/playboi.mp3",channels:[0]);
 
-	a =  (PlayBuf.ar(1, b, startPos:songStart, loop: 1, rate:playRate) * 0.1).dup;
+	a =  (PlayBuf.ar(1, b, startPos:songStart, , rate:playRate, doneAction:2) * 0.1).dup;
 
-	a = PitchShift.ar(a,pitchRatio:pitchRatio, timeDispersion:0.1);
+	//a = PitchShift.ar(a,pitchRatio:pitchRatio, timeDispersion:0.1);
 
 	Out.ar(0,a);
 
@@ -82,20 +83,24 @@ SynthDef.new(\sfxTest,{
 	arg songStart = 0, playRate = 1;
 	var wowies = 0;
 
-	b = Buffer.readChannel(s,"D:/Repos/TNM113-Labs/sfx/Hissknapp.aac", channels:[0]);
+	b = Buffer.readChannel(s,thisProcess.nowExecutingPath.dirname++"/sfx/BestickSlapp.wav", channels:[0]);
 
 
-
-});
+Out.ar(0,b);
+}).add;
 )
-x= Synth.new(\millie);
+x= Synth.new(\sfxTest);
 
 x.set(\songStart,44100*4);
-x.set(\playRate,0.5);
+x.set(\playRate,10);
 x.set(\pitchRatio,1);
 
 b.numFrames;
 x=b.numFrames;
+
+//Start of lab1
+
+
 
 
 
