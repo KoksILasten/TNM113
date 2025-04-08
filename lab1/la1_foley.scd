@@ -11,30 +11,42 @@ s.quit;
 s.plotTree;
 // När servern är igång skickar man över en eller flera synth definitioner till serven.
 (
-// Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
-
-SynthDef(\samplePlayer, { arg bufnum = 0, rate = 1, trigger = 1, startPos = 0, loop = 1, mix=0.33,room=0.5,damp=0.5, freq=440, rq=0.9, channels=2,freq = 20000 ;
-    var sound = PlayBuf.ar(
+SynthDef(\samplePlayer2, { arg bufnum=0,rate=1,freq=20000,channels=2,rq=1.0,loop=0;
+	var sound = PlayBuf.ar(
 		numChannels: channels,
 		bufnum: bufnum,
-		rate: rate,
-		trigger: trigger,
-		startPos: startPos,
-		loop: loop,
+		rate: BufRateScale.kr(bufnum),
+		trigger: 1,
+		startPos: 0,
+		loop: 0,
 		doneAction: 2,
 	);
-	var reverb = FreeVerb.ar(sound,mix,room,damp);
-	var envelope1 = EnvGen.kr(Env.perc(attackTime: 4, releaseTime: 20,
-level: 1.0, curve: -4.0));
-	var envelope2 = EnvGen.kr(Env.perc(attackTime: 0.01, releaseTime: 0.1,
-level: 1.0, curve: -4.0).range(100,10000));
-	var output = RLPF.ar(reverb,freq:freq, rq:rq) * envelope1 ;
+	var filtered = RLPF.ar(sound, freq: freq, rq: rq);
+    var envelope = EnvGen.kr(Env.perc(0.01, 0.1, 1, -4),doneAction: 0);
+	var output = sound * envelope;
 
-	Out.ar(0, [output,output]);
+	Out.ar(0, output ! 2);
+}).add;
+)
+(
+SynthDef(\samplePlayer, { arg bufnum = 0,rate=1,freq=20000,channels=2,rq=1.0,loop=0;
+    var sound = PlayBuf.ar(
+		numChannels: 2,
+		bufnum: bufnum,
+		rate: rate,
+		trigger: 1,
+		startPos: 0,
+		loop: loop,
+		doneAction: 0,
+	);
+
+	var filtered = RLPF.ar(sound, freq: freq, rq: rq);
+    var envelope = EnvGen.kr(Env.perc(0.01, 0.1, 1, -4),doneAction: 0);
+	var output = filtered;
+
+	Out.ar(0, output ! 2);
 }).add;
 
-(
-// Steam wand sound
 SynthDef(\steamWand, { |out=0, rate=1, amp=0.5, pan=0|
     var sound, env;
     sound = PinkNoise.ar() * LFNoise1.kr(10).range(0.5, 1.0);
@@ -44,7 +56,6 @@ SynthDef(\steamWand, { |out=0, rate=1, amp=0.5, pan=0|
     Out.ar(out, sound * env * amp * rate);
 }).add;
 
-// Machine hum/buzz
 SynthDef(\machineHum, { |out=0, amp=0.3, pan=0|
     var sound, env;
     sound = SinOsc.ar([50, 50.5], 0, amp) * LFNoise1.kr(0.5).range(0.7, 1.0);
@@ -53,7 +64,7 @@ SynthDef(\machineHum, { |out=0, amp=0.3, pan=0|
     Out.ar(out, sound);
 }).add;
 )
-)
+
 (
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
 
@@ -62,12 +73,14 @@ var soundSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/playboi
 x = Synth.new(\samplePlayer, [\bufnum, soundSample]);
 
 )
+(
 x.set(\freq,4000);
 x.set(\rq,0.9);
 x.set(\rate,0.5);
 x.set(\rate,2);
 x.set(\rate,10);
 x.set(\rate,0.1);
+)
 /* Experimentera med olika faktorer, till exempel 0.5, 2, 10, 0.1. Hur låter det, och varför?
 -- Svar: Tempot som ljudet spelas i samt frekvensen på ljudet ändras.
 --------------------------------------------------------------------------------*/
@@ -111,12 +124,11 @@ Hur låter det? Hörs det att envelopen påverkar ljudets volymmässiga kontur?
 fork({
 var playboi = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/playboi.mp3");
 c = Synth.new(\samplePlayer, [\bufnum, playboi]);
-c.set(\rate, [1].choose);
+c.set(\rate, 1);
 c.set(\freq, 20000);
 c.set(\rq, 1.0);
 c.set(\loop, 0);
 });
-0.15.wait;
 )
 
 (
@@ -144,59 +156,73 @@ var stoneScrapeSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sf
 var stoneRollSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Stenvagga.wav");
 var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/VattenRinna2.wav");
 
+
+//postln(thisProcess.nowExecutingPath.dirname);
+
 ~coffeeSelector = { |repeats=1, pling=true|
     Routine({
         repeats.do { |i|
-			a = Synth.new(\samplePlayer, [\bufnum, clickSound, \channels, 1]);
-			a.set(\freq, 550);
-            0.3.wait; // wait between repetitions
+            a = Synth.new(\samplePlayer, [\bufnum, clickSound, \channels, 1]);
+            a.set(\freq, 550);
+            0.3.wait;
         };
-		if(pling == true, {
-			0.5.wait;
-		repeats.do { |i|
-				{ Saw.ar(150 * (i+1), 0.1) * EnvGen.ar(Env.perc(0.05, 0.2, 0.8, -4), doneAction:2) ! 2}.play;
-			0.12.wait; // wait between repetitions
-        };
-		}, {});
+
+        // Modified boolean test
+        if(pling, { // Removed explicit == true comparison
+            0.5.wait;
+            repeats.do { |i|
+                { Saw.ar(150 * (i+1), 0.1) *
+                  EnvGen.ar(Env.perc(0.05, 0.2, 0.8, -4), doneAction:2) ! 2
+                }.play;
+                0.12.wait;
+            };
+        });
     }).play;
 };
 
 ~coffeeMaker = { |coffeeStg=1|
 	fork({
-		2.wait;
+		s.sync;
+		3.0.wait;
 		{var noise = PinkNoise.ar();
 			var noiseFilter = LPF.ar(noise, freq: 800);
-			noiseFilter ! 2 * 0.2;
+			noiseFilter ! 2 * 0.5;
 		}.play;
-		k = Synth.new(\machineHum, [\amp, 0.3, \out
-		l = Synth(\steamWand, [\amp, 0.7, \rate, 1.5]);
-	b = Synth.new(\samplePlayer, [\bufnum, clickholdSound, \channels, 1]);
+
+		k = Synth.new(\machineHum, [\amp, 0.15]);
+		b = Synth.new(\samplePlayer, [\bufnum, clickholdSound, \channels, 1]);
 		0.3.wait;
-	d = Synth.new(\samplePlayer,[\bufnum, rattleSound, \channels, 1]);
-	d.set(\rate, 0.3);
-	d.set(\rq, 0.2);
+		d = Synth.new(\samplePlayer,[\bufnum, rattleSound, \channels, 1]);
+		d.set(\rate, 0.3);
+		d.set(\rq, 0.2);
 		c = Synth.new(\samplePlayer, [\bufnum,grusSound , \channels, 1]);
-	c.set(\rate, 0.3);
+		c.set(\rate, 0.3);
 		e = Synth.new(\samplePlayer, [\bufnum, plingSound, \channels, 1]);
-	e.set(\rate, 3);
+		e.set(\rate, 3);
 		e.set(\freq, 440);
+		h = Synth.new(\samplePlayer, [\bufnum, stoneScrapeSound, \channels, 1]); //chicken
+		h.set(\rate, 0.5);
+		h.set(\loop,1);
+		h.set(\rq, 0.3);
 
 		3.0.wait;
 		d.free;
 		c.free;
 		e.free;
+		h.free;
 
 		//f = Synth.new(\riser);
-		h = Synth.new(\samplePlayer, [\bufnum, stoneScrapeSound, \channels, 1]); //chicken
-		h.set(\rate, 2);
-		h.set(\loop,1);
-		h.set(\rq, 0.3);
 		g = Synth.new(\samplePlayer, [\bufnum, rawrSound, \channels, 1]);
 		g.set(\rate, 0.2);
 		g.set(\freq, 600);
 		i = Synth.new(\samplePlayer, [\bufnum, stoneRollSound, \channels, 1]);
 		i.set(\rate, 2);
 		j = Synth.new(\samplePlayer, [\bufnum, waterSound, \channels, 2]);
+		m = Synth.new(\samplePlayer, [\bufnum, eSound, \channels, 1]);
+		m.set(\rate, 0.2);
+		m.set(\rq, 0.2);
+		m.set(\freq, 440);
+		l = Synth(\steamWand, [\amp, 0.5, \rate, 2]);
 
 
 		10.wait;
@@ -206,8 +232,8 @@ var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Vatt
 
 	});
 };
-
 ~coffeeSelector.(coffeeStrength, true);
 ~coffeeMaker.(2);
+
 )
 
