@@ -184,12 +184,17 @@ var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Vatt
 	fork({
 		s.sync;
 		3.0.wait;
+	/*
 		{var noise = PinkNoise.ar();
 			var noiseFilter = LPF.ar(noise, freq: 800);
 			noiseFilter ! 2 * 0.5;
 		}.play;
+		*/
 
-		k = Synth.new(\machineHum, [\amp, 0.15]);
+		//k = Synth.new(\machineHum, [\amp, 0.15]);
+		k = Synth.new(\samplePlayer, [\bufnum, acSound, \channels, 1]);
+		k.set(\freq, 260);
+
 		b = Synth.new(\samplePlayer, [\bufnum, clickholdSound, \channels, 1]);
 		0.3.wait;
 		d = Synth.new(\samplePlayer,[\bufnum, rattleSound, \channels, 1]);
