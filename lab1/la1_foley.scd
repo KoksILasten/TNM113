@@ -142,7 +142,7 @@ EnvGen.kr(
 (
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
 
-var coffeeStrength = 2;
+var coffeeStrength = 3;
 
 var clickSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Reflex-click-02.wav");
 var clickholdSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Reflex-click-03.wav");
@@ -195,6 +195,7 @@ var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Vatt
 		d = Synth.new(\samplePlayer,[\bufnum, rattleSound, \channels, 1]);
 		d.set(\rate, 0.3);
 		d.set(\rq, 0.2);
+		0.2.wait;
 		c = Synth.new(\samplePlayer, [\bufnum,grusSound , \channels, 1]);
 		c.set(\rate, 0.3);
 		e = Synth.new(\samplePlayer, [\bufnum, plingSound, \channels, 1]);
@@ -217,23 +218,25 @@ var waterSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sfx/Vatt
 		g.set(\freq, 600);
 		i = Synth.new(\samplePlayer, [\bufnum, stoneRollSound, \channels, 1]);
 		i.set(\rate, 2);
+		0.5.wait;
 		j = Synth.new(\samplePlayer, [\bufnum, waterSound, \channels, 2]);
-		m = Synth.new(\samplePlayer, [\bufnum, eSound, \channels, 1]);
+		m = Synth.new(\samplePlayer, [\bufnum, eSound, \channels, 2]);
 		m.set(\rate, 0.2);
 		m.set(\rq, 0.2);
 		m.set(\freq, 440);
+		0.3.wait;
 		l = Synth(\steamWand, [\amp, 0.5, \rate, 2]);
 
 
 		10.wait;
 
-		j.free;
+		s.freeAll;
 
 
 	});
 };
 ~coffeeSelector.(coffeeStrength, true);
-~coffeeMaker.(2);
+~coffeeMaker.(coffeeStrength);
 
 )
 
