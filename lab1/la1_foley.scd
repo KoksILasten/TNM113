@@ -169,11 +169,11 @@ var chairScrapeSound = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sf
             0.3.wait;
         };
 
-        // Modified boolean test
-        if(pling, { // Removed explicit == true comparison
+
+        if(pling, {
             0.5.wait;
             repeats.do { |i|
-                { Saw.ar(150 * (i+1), 0.1) *
+                { Saw.ar(150 * (2*i+1), 0.1) *
                   EnvGen.ar(Env.perc(0.05, 0.2, 0.8, -4), doneAction:2) ! 2
                 }.play;
                 0.12.wait;
