@@ -99,16 +99,46 @@ SynthDef(\woodBlock, { arg t_trig;
 }).add;
 )
 
-// Cowbell
 (
-SynthDef(\cowBell, { arg t_trig;
+// Cowbell
+SynthDef(\cowBell, { arg t_trig = 1;
+	//var trig = Impulse.ar(0);
+    var freqs = [1000, 1500, 3500, 5000, 6000]; // Resonant frequencies
+    var decays = [0.1, 0.15, 0.20, 0.25, 0.3]; // Decay times for each frequency
+    var noise = WhiteNoise.ar() * EnvGen.ar(Env.perc(0.001, 0.1, curve: -6), t_trig) * 0.3;
+    var env = EnvGen.ar(Env.perc(0.001, 4.0), t_trig);
 
-}).add;
+    var resonances = Mix.ar(
+        freqs.collect { |freq, i|
+            Ringz.ar(Impulse.ar(0), freq, decays[i]) * 0.1});
+
+    var sig = (resonances + noise) * env;
+    sig = RHPF.ar(sig, 1000, rq: 0.3);
+    Out.ar(0, sig ! 2); // Stereo output
+}).play;
 )
 
 // Crash
 (
 SynthDef(\crash, { arg t_trig;
+    var body, body1, body2, body3, body4, body5, hit, output, bodyFreq = 800;
+	var noise = WhiteNoise.ar() * EnvGen.ar(Env.perc(0.001, 0.1), t_trig) * 0.3;
+	var freqs = [488, 691, 977, 1381, 1953, 2762];¨¨
 
-}).add;
+	//Pulse.ar();
+	body = LFSaw.ar(freq: 500, mul: 1);
+	body1 = LFSaw.ar(freq: 1400, mul: 1);
+	body2 = LFSaw.ar(freq: 1000, mul: 1);
+	body3 = LFSaw.ar(freq: 4422, mul: 1);
+	body4 = LFSaw.ar(freq: 5800, mul: 1);
+	body5 = LFSaw.ar(freq: 6500, mul: 1);
+
+	body = Mix(body1, body2, body3, body4, body5, body, PinkNoise.ar());
+	body = RHPF.ar(in: body, freq: 500, rq: 0.01);
+
+	body = body * EnvGen.ar(Env.perc(0.001, 0.5, curve: -4));
+    output = body;
+
+    Out.ar(0, {output}!2);
+}).play;
 )
