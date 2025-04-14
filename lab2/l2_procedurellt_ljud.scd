@@ -17,10 +17,10 @@ SynthDef(\bassDrum, { arg t_trig = 1;
 	//hit  = LFSaw.ar(freq:80); //Snappier
 	//hit  = PinkNoise.ar(0.5); //Meatier ;)
 	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1.5, curve:-4), t_trig);
-	body = SinOsc.ar(freq:40); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
+	body = SinOsc.ar(freq:60); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
 	body = body * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:1, curve:-4), t_trig, doneAction:2); // doneAction resleases synth when env is done.
 
-	output = body+hit;
+	output = (body+hit)*3;
 	//output = hit;
 	//output = body;
 	Out.ar(0, {output}!2);
@@ -31,24 +31,33 @@ SynthDef(\bassDrum, { arg t_trig = 1;
 
 // Snare drum
 (
-SynthDef(\snareDrum, { arg t_trig=1;
+SynthDef(\snareDrum, { arg t_trig = 1;
 
-	var body, body1, body2, hit, output, bodyFreq = 210;
+	var body, body1, body2, hit, output, bodyFreq = 130, noise;
 
 	//hit  = LFTri.ar(freq:80); //More muffled
 	hit  = LFSaw.ar(freq:30); //Snappier
 	//hit  = PinkNoise.ar(0.5); //Meatier ;)
+
 	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1.5, curve:-4), t_trig);
 
 	body1 = SinOsc.ar(freq:bodyFreq);
 	body2 = SinOsc.ar(freq:bodyFreq *1.5);
-	body1 = body1 * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:0.9, curve:-4), t_trig);
-	body2 = body2 * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:1, curve:-4), t_trig, doneAction:2); // doneAction resleases synth when env is done.
+
+	body1 = body1 * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:1, curve:-4), t_trig);
+	body2 = body2 * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:0.9, curve:-4), t_trig, doneAction:2); // doneAction resleases synth when env is done.
+
+	//noise = PinkNoise.ar();
+	noise = WhiteNoise.ar(0.25);
+	noise =HPF.ar(noise,freq:750);
+	noise = noise * EnvGen.ar(Env.perc(0,releaseTime:0.25, level:0.5, curve:-4), t_trig);
 
 
-	body = (body1+body2)/2;
+	body = (body1+body2)*0.7;
 
-	output = body + hit;
+	output = (noise + body + hit)*3;
+
+	//output = noise;
 
 	Out.ar(0, {output}!2);
 
@@ -66,40 +75,40 @@ SynthDef(\clHiHat, { arg t_trig;
 (
 SynthDef(\opHiHat, { arg t_trig;
 
-}).play;
+}).add;
 )
 
 // High tom
 (
 SynthDef(\highTom, { arg t_trig;
 
-}).play;
+}).add;
 )
 
 // Low tom
 (
 SynthDef(\lowTom, { arg t_trig;
 
-}).play;
+}).add;
 )
 
 // Woodblock
 (
 SynthDef(\woodBlock, { arg t_trig;
 
-}).play;
+}).add;
 )
 
 // Cowbell
 (
 SynthDef(\cowBell, { arg t_trig;
 
-}).play;
+}).add;
 )
 
 // Crash
 (
 SynthDef(\crash, { arg t_trig;
 
-}).play;
+}).add;
 )
