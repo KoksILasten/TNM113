@@ -98,7 +98,7 @@
 
 // Declare synth instances
 ~woodBlock = Synth.new(\woodBlock).register;
-~cowBell = Synth.new(\cowBell).register;
+//~cowBell = Synth.new(\cowBell).register;
 
 ~crash = Synth.new(\crash).register;
 ~opHiHat = Synth.new(\opHiHat).register;
@@ -117,7 +117,10 @@
 	{
 		// Send triggers to the drum synths
 		~woodBlock.set(\t_trig, ~woodBlockTrig[~beatStepCounter]);
-		~cowBell.set(\t_trig, ~cowBellTrig[~beatStepCounter]);
+		if(~cowBellTrig[~beatStepCounter] == 1){
+		Synth.new(\cowBell, [\t_trig, ~cowBellTrig[~beatStepCounter]]);
+		//~cowBell.set(\t_trig, ~cowBellTrig[~beatStepCounter]);
+		};
 
 		~crash.set(\t_trig, ~crashTrig[~beatStepCounter]);
 		~opHiHat.set(\t_trig, ~opHiHatTrig[~beatStepCounter]);

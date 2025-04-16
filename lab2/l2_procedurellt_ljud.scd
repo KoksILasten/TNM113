@@ -18,7 +18,7 @@ SynthDef(\bassDrum, { arg t_trig = 1;
 	//hit  = PinkNoise.ar(0.5); //Meatier ;)
 	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1.5, curve:-4), t_trig);
 	body = SinOsc.ar(freq:60); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
-	body = body * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:1, curve:-4), t_trig, doneAction:2); // doneAction resleases synth when env is done.
+	body = body * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:1, curve:-4), t_trig); // doneAction resleases synth when env is done.
 
 	output = (body+hit)*3;
 	//output = hit;
@@ -66,16 +66,41 @@ SynthDef(\snareDrum, { arg t_trig = 1;
 
 // ClHiHat
 (
-SynthDef(\clHiHat, { arg t_trig;
+SynthDef(\clHiHat, { arg t_trig=1;
+	var noise = WhiteNoise.ar(0.4);
+
+	var output = noise * EnvGen.ar(Env.perc(0.005 , releaseTime: 0.025, level: 1 , curve:-1), t_trig);
+	output = RHPF.ar(output, freq: 1300, rq: 0.6);
+
+	Out.ar(0, {output}!2);
 
 }).play;
 )
 
 // OpHiHat
 (
-SynthDef(\opHiHat, { arg t_trig;
+SynthDef(\opHiHat, { arg t_trig=1;
+	var noise = WhiteNoise.ar(0.4);
+	var sq0,sq1,sq2,sq3,output;
 
-}).add;
+	//cymbal
+	sq0 = LFSaw.ar(1150, iphase: 0.0 ,mul: 1.0);
+	sq1 = LFSaw.ar(820, iphase: 0.0, mul: 1.0);
+	sq2 = LFSaw.ar(317, iphase: 0.0,  mul: 1.0);
+	sq3 = LFSaw.ar(465, iphase: 0.0,  mul: 1.0);
+
+	sq0 = (sq0 + sq2 + sq1 + sq3) / 4;
+
+
+	// low filter noise part
+	noise = RHPF.ar(noise, 682, rq: 0.9);
+
+	output = (noise + sq0 / 2 ) * EnvGen.ar(Env.perc(0.005 , releaseTime: 0.08, level: 1 , curve:-1), t_trig);
+	output = RHPF.ar(output, freq: 1200, rq: 0.8); //high filter
+
+	Out.ar(0, {output}!2);
+
+}).play;
 )
 
 // High tom
@@ -105,8 +130,8 @@ SynthDef(\cowBell, { arg t_trig = 1;
 	//var trig = Impulse.ar(0);
     var freqs = [1000, 1500, 3500, 5000, 6000]; // Resonant frequencies
     var decays = [0.1, 0.15, 0.20, 0.25, 0.3]; // Decay times for each frequency
-    var noise = WhiteNoise.ar() * EnvGen.ar(Env.perc(0.001, 0.1, curve: -6), t_trig) * 0.3;
-    var env = EnvGen.ar(Env.perc(0.001, 4.0), t_trig);
+    var noise = WhiteNoise.ar() * EnvGen.ar(Env.perc(0.001, 0.1, curve: -6), t_trig, doneAction: 7) * 0.3;
+    var env = EnvGen.ar(Env.perc(0.001, 4.0), t_trig, doneAction:7);
 
     var resonances = Mix.ar(
         freqs.collect { |freq, i|
