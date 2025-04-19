@@ -145,25 +145,33 @@ SynthDef(\cowBell, { arg t_trig = 1;
 
 // Crash
 (
-SynthDef(\crash, { arg t_trig;
-    var body, body1, body2, body3, body4, body5, hit, output, bodyFreq = 800;
-	var noise = WhiteNoise.ar() * EnvGen.ar(Env.perc(0.001, 0.1), t_trig) * 0.3;
-	var freqs = [488, 691, 977, 1381, 1953, 2762];¨¨
+SynthDef(\crash, { arg t_trig = 1;
+    var body, output, mainBody, bpFilter, env;
 
-	//Pulse.ar();
-	body = LFSaw.ar(freq: 500, mul: 1);
-	body1 = LFSaw.ar(freq: 1400, mul: 1);
-	body2 = LFSaw.ar(freq: 1000, mul: 1);
-	body3 = LFSaw.ar(freq: 4422, mul: 1);
-	body4 = LFSaw.ar(freq: 5800, mul: 1);
-	body5 = LFSaw.ar(freq: 6500, mul: 1);
+	var noise = WhiteNoise.ar(0.4);
 
-	body = Mix(body1, body2, body3, body4, body5, body, PinkNoise.ar());
-	body = RHPF.ar(in: body, freq: 500, rq: 0.01);
+	body = [
+		LFPulse.ar(freq: 2040, mul: 1),
+		LFPulse.ar(freq: 2300, mul: 1),
+		LFPulse.ar(freq: 2600, mul: 1),
+		LFPulse.ar(freq: 2950, mul: 1),
+		LFPulse.ar(freq: 3400, mul: 1),
+		LFPulse.ar(freq: 4100, mul: 1)
+	];
 
-	body = body * EnvGen.ar(Env.perc(0.001, 0.5, curve: -4));
-    output = body;
+	body = Mix(body)* 0.6;
 
-    Out.ar(0, {output}!2);
+	mainBody = (body * 0.6) + noise;
+
+	bpFilter = BPF.ar(in: mainBody, freq: 3500, rq:0.5);
+
+	// 700 ms decay in acorance to DR110 schematics.
+	env = EnvGen.ar(Env.perc(0.001, 0.7, curve: -2));
+
+	mainBody = bpFilter * env;
+
+    output = mainBody;
+
+    Out.ar(0, output!2);
 }).play;
 )
