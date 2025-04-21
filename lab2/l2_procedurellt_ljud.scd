@@ -6,6 +6,10 @@ s.quit;
 s.scope;
 s.plotTree;
 
+s.record;
+s.stopRecording;
+thisProcess.platform.recordingsDir = thisProcess.nowExecutingPath.dirname++"/Results";
+
 // När servern är igång skickar man över en eller flera synth definitioner till serven.
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
 
@@ -16,9 +20,9 @@ SynthDef(\bassDrum, { arg t_trig = 1;
 	hit  = LFTri.ar(freq:80); //More muffled
 	//hit  = LFSaw.ar(freq:80); //Snappier
 	//hit  = PinkNoise.ar(0.5); //Meatier ;)
-	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1.5, curve:-4), t_trig);
+	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1, curve:-4), t_trig);
 	body = SinOsc.ar(freq:60); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
-	body = body * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:1, curve:-4), t_trig); // doneAction resleases synth when env is done.
+	body = body * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:0.5, curve:-4), t_trig); // doneAction resleases synth when env is done.
 
 	output = (body+hit)*3;
 	//output = hit;
@@ -39,13 +43,13 @@ SynthDef(\snareDrum, { arg t_trig = 1;
 	hit  = LFSaw.ar(freq:30); //Snappier
 	//hit  = PinkNoise.ar(0.5); //Meatier ;)
 
-	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1.5, curve:-4), t_trig);
+	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1, curve:-4), t_trig);
 
 	body1 = SinOsc.ar(freq:bodyFreq);
 	body2 = SinOsc.ar(freq:bodyFreq *1.5);
 
 	body1 = body1 * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:1, curve:-4), t_trig);
-	body2 = body2 * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:0.9, curve:-4), t_trig, doneAction:2); // doneAction resleases synth when env is done.
+	body2 = body2 * EnvGen.ar(Env.perc(0,releaseTime:0.1, level:0.9, curve:-4), t_trig);
 
 	//noise = PinkNoise.ar();
 	noise = WhiteNoise.ar(0.25);
@@ -55,7 +59,7 @@ SynthDef(\snareDrum, { arg t_trig = 1;
 
 	body = (body1+body2)*0.7;
 
-	output = (noise + body + hit)*3;
+	output = (noise + body + hit*3);
 
 	//output = noise;
 
@@ -105,23 +109,61 @@ SynthDef(\opHiHat, { arg t_trig=1;
 
 // High tom
 (
-SynthDef(\highTom, { arg t_trig;
+SynthDef(\highTom, { arg t_trig = 1;
+	var body, hit, output, pitchEnv, noise;
+	hit  = LFTri.ar(freq:80); //More muffled
+	//hit  = LFSaw.ar(freq:80); //Snappier
+	//hit  = PinkNoise.ar(0.5); //Meatier ;)
+	noise = WhiteNoise.ar()*0.05;
+	pitchEnv = EnvGen.ar(Env.perc(0,releaseTime:0.01, level:0.5, curve:-4), t_trig).range(1,3)*0.5;
 
-}).add;
+	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1.5, curve:-4), t_trig);
+	body = SinOsc.ar(freq:165); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
+	body = (body + noise) * EnvGen.ar(Env.perc(0,releaseTime:0.3, level:1, curve:-4), t_trig);
+	body = body * pitchEnv;
+
+	body = (body+hit)*0.75;
+	//output = hit;
+	output = body;
+	Out.ar(0, {output}!2);
+}).play;
 )
 
 // Low tom
 (
-SynthDef(\lowTom, { arg t_trig;
+SynthDef(\lowTom, { arg t_trig = 1;
+	var body, hit, output, pitchEnv, noise;
+	hit  = LFTri.ar(freq:80); //More muffled
+	//hit  = LFSaw.ar(freq:80); //Snappier
+	//hit  = PinkNoise.ar(0.5); //Meatier ;)
+	noise = WhiteNoise.ar()*0.02;
+	pitchEnv = EnvGen.ar(Env.perc(0,releaseTime:0.01, level:0.5, curve:-4), t_trig).range(1,3)*0.5;
 
-}).add;
+	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1.5, curve:-4), t_trig);
+	body = SinOsc.ar(freq:140); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
+	body = (body + noise) * EnvGen.ar(Env.perc(0,releaseTime:0.3, level:1, curve:-4), t_trig);
+	body = body * pitchEnv;
+
+	body = (body+hit)*0.75;
+	//output = hit;
+	output = body;
+	Out.ar(0, {output}!2);
+}).play;
 )
-
 // Woodblock
 (
-SynthDef(\woodBlock, { arg t_trig;
+SynthDef(\woodBlock, { arg t_trig = 1;
+	var output, sound, env, noise;
 
-}).add;
+	noise = LFSaw.ar(freq:100);
+	noise = noise * EnvGen.ar(Env.perc(0,releaseTime:0.25, level:0.1, curve:-8), t_trig);
+
+	sound = SinOsc.ar(freq:1740);
+	env = EnvGen.ar(Env.perc(0, 0.11, curve:-8));
+	output = noise+ sound * env;
+
+	Out.ar(0, {output}!2);
+}).play;
 )
 
 (
