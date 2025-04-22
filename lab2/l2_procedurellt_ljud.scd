@@ -40,7 +40,7 @@ SynthDef(\snareDrum, { arg t_trig = 1;
 	var body, body1, body2, hit, output, bodyFreq = 130, noise;
 
 	//hit  = LFTri.ar(freq:80); //More muffled
-	hit  = LFSaw.ar(freq:30); //Snappier
+	hit  = LFSaw.ar(freq:30, mul: 1.5); //Snappier
 	//hit  = PinkNoise.ar(0.5); //Meatier ;)
 
 	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1, curve:-4), t_trig);
@@ -54,14 +54,14 @@ SynthDef(\snareDrum, { arg t_trig = 1;
 	//noise = PinkNoise.ar();
 	noise = WhiteNoise.ar(0.25);
 	noise =HPF.ar(noise,freq:750);
-	noise = noise * EnvGen.ar(Env.perc(0,releaseTime:0.25, level:0.5, curve:-4), t_trig);
+	noise = noise * EnvGen.ar(Env.perc(0,releaseTime:0.25, level:0.25, curve:-8), t_trig);
 
 
 	body = (body1+body2)*0.7;
 
-	output = (noise + body + hit*3);
+	output = (noise + body + hit);
 
-	//output = noise;
+	//output = body;
 
 	Out.ar(0, {output}!2);
 
@@ -114,15 +114,15 @@ SynthDef(\highTom, { arg t_trig = 1;
 	hit  = LFTri.ar(freq:80); //More muffled
 	//hit  = LFSaw.ar(freq:80); //Snappier
 	//hit  = PinkNoise.ar(0.5); //Meatier ;)
-	noise = WhiteNoise.ar()*0.05;
+	noise = WhiteNoise.ar()*0.02;
 	pitchEnv = EnvGen.ar(Env.perc(0,releaseTime:0.01, level:0.5, curve:-4), t_trig).range(1,3)*0.5;
 
 	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1.5, curve:-4), t_trig);
-	body = SinOsc.ar(freq:165); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
+	body = SinOsc.ar(freq:150); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
 	body = (body + noise) * EnvGen.ar(Env.perc(0,releaseTime:0.3, level:1, curve:-4), t_trig);
 	body = body * pitchEnv;
 
-	body = (body+hit)*0.75;
+	body = (body+hit)*0.4;
 	//output = hit;
 	output = body;
 	Out.ar(0, {output}!2);
@@ -140,11 +140,11 @@ SynthDef(\lowTom, { arg t_trig = 1;
 	pitchEnv = EnvGen.ar(Env.perc(0,releaseTime:0.01, level:0.5, curve:-4), t_trig).range(1,3)*0.5;
 
 	hit = hit * EnvGen.ar(Env.perc(0,releaseTime:0.01, level:1.5, curve:-4), t_trig);
-	body = SinOsc.ar(freq:140); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
+	body = SinOsc.ar(freq:135); // provade freq [50, 60, 70, 74, 80, 90] allt förbi 90 börjar låta mer snare typ
 	body = (body + noise) * EnvGen.ar(Env.perc(0,releaseTime:0.3, level:1, curve:-4), t_trig);
 	body = body * pitchEnv;
 
-	body = (body+hit)*0.75;
+	body = (body+hit)*0.4;
 	//output = hit;
 	output = body;
 	Out.ar(0, {output}!2);
