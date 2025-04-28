@@ -23,7 +23,7 @@ SynthDef(\distanceSonification, { arg freq = 220, level = 0, distance = 0;
 
 
 
-SynthDef(\tencm, { arg freq =150, level = 0, distance = 2, lfo = 5;
+SynthDef(\tencm, { arg freq = 150, level = 0, distance = 10, lfo = 10;
 
 	var output;
 	var main = [
@@ -35,16 +35,17 @@ SynthDef(\tencm, { arg freq =150, level = 0, distance = 2, lfo = 5;
 	];
 
 	//var env = EnvGen.ar(Env.perc(attackTime: 0.01, releaseTime: 0.5, level: 1, curve: -2));
-	var filter = RLPF.ar(in:main, freq: 200, rq: 0.2);
+	var filter = RLPF.ar(in: main, freq: 200, rq: 0.5);
+	var hpfFilter = RHPF.ar(in: filter, freq: 600, rq: 0.2);
 
-	var onoff = LFPulse.kr(freq: lfo).range(distance,0);
+	var onoff = LFPulse.kr(freq: lfo, width: 0.9).range(distance,0);
 
 	main = Mix(main) * 0.3 ;
 
 
-	output = filter * onoff * level.lag(1);
+	output = hpfFilter / 4 * onoff * level.lag(1);
 	Out.ar(0, {output}!2);
-}).add;
+}).play;
 
 
 // Denna synthdefinition är en lyssnare på muspositionen på skärmen
@@ -94,7 +95,7 @@ SynthDef(\sendMouse, {
 	// under 300cm
 	{ distance <= 300}{
 		level = 1;
-		freq = 80;
+		freq = 110;
 		lfo = 1;
 	};
 
