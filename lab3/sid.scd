@@ -4,14 +4,45 @@ s.boot; // en rad kod körs med <Shift> och <Enter>
 s.quit;
 // Start oscilloscope
 s.scope;
+s.plotTree;
 
 // När servern är igång skickar man över en eller flera synth definitioner till serven.
 (
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
 
-SynthDef(\distanceSonification, { arg freq = 220, level = 0;
+SynthDef(\distanceSonification, { arg freq = 220, level = 0, distance = 0;
 	var output = LFTri.ar(freq) * level.lag(1);
 
+	//var tencm = Synth.new(\tencm, \freq, freq, \distance, distance);
+
+	output = output;
+
+	Out.ar(0, {output}!2);
+}).add;
+
+
+
+
+SynthDef(\tencm, { arg freq =150, level = 0, distance = 2, lfo = 5;
+
+	var output;
+	var main = [
+
+		SinOsc.ar(freq),
+		SinOsc.ar(freq * 2),
+		SinOsc.ar(freq * 4),
+		SinOsc.ar(freq * 8)
+	];
+
+	//var env = EnvGen.ar(Env.perc(attackTime: 0.01, releaseTime: 0.5, level: 1, curve: -2));
+	var filter = RLPF.ar(in:main, freq: 200, rq: 0.2);
+
+	var onoff = LFPulse.kr(freq: lfo).range(distance,0);
+
+	main = Mix(main) * 0.3 ;
+
+
+	output = filter * onoff * level.lag(1);
 	Out.ar(0, {output}!2);
 }).add;
 
@@ -26,34 +57,52 @@ SynthDef(\sendMouse, {
 (
 // Följande registrerar distanceSonification synthdefinitionen på servern
 ~distanceSynth = Synth.new(\distanceSonification).register;
+~bongSynth = Synth.new(\tencm).register;
 
 // Denna funktion är den som tar emot avståndet mellan bilen och lampan,
 // och som ska användas för att mappa avståndet till olika mått och sedan
 // justera synthdefinitionen (distanceSonification) på servern.
 ~adjustTheSonification = { arg distance; // distance är inputargumentet
 	// Deklarera variabler först
-	var level;
+	var level, freq, lfo;
 	// Skriv ut avståndet i Post window
 	("The distance is:" + distance ++ "cm").postln;
 	// Använd case för att ändra/mappa avståndet till olika andra värden
 	case
-	// För avstånd kortare än 30cm
+	// För avstånd kortare än 10cm
+	{ distance <= 10 } {
+		level = 1;
+		freq = 500;
+		lfo = 10;
+	}
+	// För avstånd kortare än 30 cm
 	{ distance <= 30 } {
 		level = 1;
+		freq = 220;
+		lfo = 8;
 	}
-	// För avstånd kortare än 3 meter
-	{ distance <= 300 } {
+	// För avstånd kortare än 50 cm
+	{ distance <= 50 } {
 		level = 1;
+		lfo = 4;
+		freq = 150;
 	}
-	// För avstånd längre än 3 meter
-	{ distance > 300 } {
+	// över 300 cm
+	{ distance > 300 }{
 		level = 0;
+	}
+	// under 300cm
+	{ distance <= 300}{
+		level = 1;
+		freq = 80;
+		lfo = 1;
 	};
 
-	// Skicka informationen till synthdefinitionen
-	~distanceSynth.set(\level, level);
-};
 
+	// Skicka informationen till synthdefinitionen
+	~bongSynth.set(\freq, freq, \level, level, \distance, distance, \lfo, lfo);
+	//~distanceSynth.set(\level, level, \freq, freq);
+};
 
 
 
