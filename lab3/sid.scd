@@ -36,15 +36,84 @@ SynthDef(\tencm, { arg freq = 150, level = 0, distance = 10, lfo = 10;
 
 	//var env = EnvGen.ar(Env.perc(attackTime: 0.01, releaseTime: 0.5, level: 1, curve: -2));
 	var filter = RLPF.ar(in: main, freq: 200, rq: 0.5);
-	var hpfFilter = RHPF.ar(in: filter, freq: 600, rq: 0.2);
+	var hpfFilter = RHPF.ar(in: filter, freq: 300, rq: 0.2);
 
-	var onoff = LFPulse.kr(freq: lfo, width: 0.9).range(distance,0);
-
-	main = Mix(main) * 0.3 ;
+	//var distanceAmp = (10 - distance).clip(0,10) / 10;
+	var onoff = LFPulse.kr(freq: lfo, width: 0.9);
 
 
 	output = hpfFilter / 4 * onoff * level.lag(1);
+
 	Out.ar(0, {output}!2);
+}).play;
+
+SynthDef(\twometre, { arg freq = 130, level = 0, distance = 10, lfo = 10;
+
+	var output;
+	var main = [
+
+		SinOsc.ar(freq),
+		SinOsc.ar(freq * 2)
+	];
+
+	//var env = EnvGen.ar(Env.perc(attackTime: 0.01, releaseTime: 0.5, level: 1, curve: -2));
+	var filter = RLPF.ar(in: main, freq: 200, rq: 0.5);
+	var hpfFilter = RHPF.ar(in: filter, freq: 600, rq: 0.2);
+
+	//between 200 and 30 so clip between 0-1
+	var onoff = LFPulse.kr(freq: lfo, width: 0.2);
+
+
+	/* docs
+	in
+	input signal.
+
+	mix
+	dry/wet balance. range 0..1.
+
+	room
+	room size. rage 0..1.
+
+	damp
+	Reverb HF damp. range 0..1.
+
+	mul
+	add
+	*/
+
+	var reverb = FreeVerb.ar(hpfFilter, mix: 0.8, room: 0.9, damp: 0.5);
+
+	reverb = Mix(reverb) * 0.5;
+
+
+	output = reverb * onoff * level.lag(1);
+	Out.ar(0, {output}!2);
+}).play;
+
+SynthDef(\beep, { arg freq = 220, level = 0;
+
+	var output;
+	var main = [
+
+		SinOsc.ar(freq),
+		SinOsc.ar(freq * 2),
+	];
+
+	main = main / 4 * 0.3;
+	output = main * level;
+
+
+	Out.ar(0, {output}!2);
+}).play;
+
+SynthDef(\submarinePing, {
+    |freq = 300, amp = 0.1, out = 0, level = 0|
+    //var env = EnvGen.kr(Env.perc(0.01, 2.5, 1, -4));
+	var env = LFPulse.kr(width: 0.2, freq: 0.5);
+    var tone = SinOsc.ar(freq) * env;
+    var reverb = FreeVerb.ar(tone, mix: 0.4, room: 0.6, damp: 0.8);
+	Out.ar(out, (reverb * amp * level.lag(1) )!2 );
+
 }).play;
 
 
@@ -59,6 +128,10 @@ SynthDef(\sendMouse, {
 // Följande registrerar distanceSonification synthdefinitionen på servern
 ~distanceSynth = Synth.new(\distanceSonification).register;
 ~bongSynth = Synth.new(\tencm).register;
+~twometre = Synth.new(\twometre).register;
+~beep = Synth.new(\beep).register;
+~subPing = Synth.new(\submarinePing).register;
+
 
 // Denna funktion är den som tar emot avståndet mellan bilen och lampan,
 // och som ska användas för att mappa avståndet till olika mått och sedan
@@ -101,7 +174,42 @@ SynthDef(\sendMouse, {
 
 
 	// Skicka informationen till synthdefinitionen
-	~bongSynth.set(\freq, freq, \level, level, \distance, distance, \lfo, lfo);
+	case
+	{ distance <= 0 }{
+		~beep.set(\level, 1, \freq, 220);
+
+		~bongSynth.set(\level, 0);
+		~twometre.set(\level, 0);
+		~subPing.set(\level, 0);
+	}
+	{ distance < 30 }{
+		~bongSynth.set(\freq, freq, \level, level, \distance, distance, \lfo, lfo);
+
+		~twometre.set(\level, 0);
+		~bongSynth.set(\level, 0);
+		~subPing.set(\level, 0);
+	}
+
+	{ distance < 200 }{
+		~twometre.set(\freq, freq, \level, level, \distance, distance, \lfo, lfo);
+
+		~bongSynth.set(\level, 0);
+		~beep.set(\level, 0);
+		~subPing.set(\level, 0);
+
+	}
+	{distance < 300}{
+		~subPing.set(\freq, 340, \level, level, \amp, 0.1);
+		//Synth(\submarinePing, [\freq, 340, \amp, 0.6, \level, level]);
+
+		~bongSynth.set(\level, 0);
+		~twometre.set(\level, 0);
+		~beep.set(\level, 0);
+
+
+
+	};
+
 	//~distanceSynth.set(\level, level, \freq, freq);
 };
 
