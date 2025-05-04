@@ -36,10 +36,10 @@ SynthDef(\tencm, { arg freq = 150, level = 0, distance = 10, lfo = 10;
 
 	//var env = EnvGen.ar(Env.perc(attackTime: 0.01, releaseTime: 0.5, level: 1, curve: -2));
 	var filter = RLPF.ar(in: main, freq: 200, rq: 0.5);
-	var hpfFilter = RHPF.ar(in: filter, freq: 300, rq: 0.2);
+	var hpfFilter = RHPF.ar(in: filter, freq: 600, rq: 0.2);
 
 	//var distanceAmp = (10 - distance).clip(0,10) / 10;
-	var onoff = LFPulse.kr(freq: lfo, width: 0.9);
+	var onoff = LFPulse.kr(freq: lfo, width: 0.8);
 
 
 	output = hpfFilter / 4 * onoff * level.lag(1);
