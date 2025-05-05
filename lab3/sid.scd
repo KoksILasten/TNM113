@@ -23,7 +23,7 @@ SynthDef(\distanceSonification, { arg freq = 220, level = 0, distance = 0;
 
 
 
-SynthDef(\tencm, { arg freq = 150, level = 0, distance = 10, lfo = 10;
+SynthDef(\tencm, { arg freq = 220, level = 0, distance = 10, lfo = 8;
 
 	var output;
 	var main = [
@@ -38,7 +38,7 @@ SynthDef(\tencm, { arg freq = 150, level = 0, distance = 10, lfo = 10;
 	var filter = RLPF.ar(in: main, freq: 200, rq: 0.5);
 	var hpfFilter = RHPF.ar(in: filter, freq: 600, rq: 0.2);
 
-	//var distanceAmp = (10 - distance).clip(0,10) / 10;
+	var distanceAmp = (10 - distance).clip(0,10) / 10;
 	var onoff = LFPulse.kr(freq: lfo, width: 0.8);
 
 
@@ -144,19 +144,17 @@ SynthDef(\sendMouse, {
 	// Använd case för att ändra/mappa avståndet till olika andra värden
 	case
 	// För avstånd kortare än 10cm
-	{ distance <= 10 } {
+	{ distance < 10 } {
 		level = 1;
 		freq = 500;
-		lfo = 10;
 	}
-	// För avstånd kortare än 30 cm
-	{ distance <= 30 } {
+	{distance < 30}{
 		level = 1;
 		freq = 220;
 		lfo = 8;
 	}
-	// För avstånd kortare än 50 cm
-	{ distance <= 50 } {
+	//För avstånd kortare än 50 cm
+	{ distance < 50 } {
 		level = 1;
 		lfo = 4;
 		freq = 150;
@@ -166,7 +164,7 @@ SynthDef(\sendMouse, {
 		level = 0;
 	}
 	// under 300cm
-	{ distance <= 300}{
+	{ distance < 300}{
 		level = 1;
 		freq = 110;
 		lfo = 1;
@@ -183,10 +181,10 @@ SynthDef(\sendMouse, {
 		~subPing.set(\level, 0);
 	}
 	{ distance < 30 }{
-		~bongSynth.set(\freq, freq, \level, level, \distance, distance, \lfo, lfo);
+		~bongSynth.set(\freq, freq, \level, level, \lfo, lfo);
 
 		~twometre.set(\level, 0);
-		~bongSynth.set(\level, 0);
+		//~bongSynth.set(\level, 0);
 		~subPing.set(\level, 0);
 	}
 
