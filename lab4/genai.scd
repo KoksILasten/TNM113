@@ -12,49 +12,49 @@ s.scope;
    // Oboe (Reference Pitch)
 SynthDef(\oboe, {
     |freq = 440, amp = 0.2, dur = 5, detune = 0, level=0 |
-    var sig = SinOsc.ar(freq + (freq * detune)) * EnvGen.kr(Env.adsr(0.01, 0.1, 0.4, 0.1), doneAction: 0);
+    var sig = SinOsc.ar(freq + (freq * detune));
     Out.ar(0, sig!2 * amp * level.lag(1));
 }).add;
 
 SynthDef(\violin, {
     |freq = 440, amp = 0.15, dur = 5, detune = 0, level=0|
-    var sig = LFSaw.ar(freq + (freq * detune), 0, 0.3) * EnvGen.kr(Env.adsr(0.01, 0.1, 0.4, 0.1), doneAction: 0);
+    var sig = LFSaw.ar(freq + (freq * detune), 0, 0.3);
     Out.ar(0, sig!2 * amp * level.lag(1));
 }).add;
 
 SynthDef(\viola, {
     |freq = 440, amp = 0.15, dur = 5, detune = 0, level=0|
-    var sig = LFSaw.ar(freq * 0.75 + (freq * 0.75 * detune), 0, 0.3) * EnvGen.kr(Env.adsr(0.01, 0.1, 0.4, 0.1), doneAction: 0);
+    var sig = LFSaw.ar(freq * 0.75 + (freq * 0.75 * detune), 0, 0.3);
     Out.ar(0, sig!2 * amp * level.lag(1));
 }).add;
 
 SynthDef(\cello, {
     |freq = 220, amp = 0.15, dur = 5, detune = 0, level=0|
-    var sig = LFSaw.ar(freq + (freq * detune), 0, 0.3) * EnvGen.kr(Env.adsr(0.01, 0.1, 0.4, 0.1), doneAction: 0);
+    var sig = LFSaw.ar(freq + (freq * detune), 0, 0.3);
     Out.ar(0, sig!2 * amp * level.lag(1));
 }).add;
 
 SynthDef(\flute, {
     |freq = 440, amp = 0.15, dur = 5, detune = 0, level=0|
-    var sig = SinOsc.ar(freq + (freq * detune), 0, 0.3) * EnvGen.kr(Env.adsr(0.01, 0.1, 0.4, 0.1), doneAction: 0);
+    var sig = SinOsc.ar(freq + (freq * detune), 0, 0.3);
     Out.ar(0, sig!2 * amp * level.lag(1));
 }).add;
 
 SynthDef(\clarinet, {
     |freq = 440, amp = 0.15, dur = 5, detune = 0, level=0|
-    var sig = Pulse.ar(freq + (freq * detune), 0.5) * EnvGen.kr(Env.adsr(0.01, 0.1, 0.4, 0.1), doneAction: 0);
+	var sig = Pulse.ar(freq + (freq * detune), 0.5);
     Out.ar(0, sig!2 * amp * level.lag(1));
 }).add;
 
 SynthDef(\trumpet, {
     |freq = 440, amp = 0.2, dur = 5, detune = 0, level=0|
-    var sig = Blip.ar(freq + (freq * detune), 5) * EnvGen.kr(Env.adsr(0.01, 0.1, 0.4, 0.1), doneAction: 0);
+    var sig = Blip.ar(freq + (freq * detune), 5);
     Out.ar(0, sig!2 * amp * level.lag(1));
 }).add;
 
 SynthDef(\horn, {
     |freq = 220, amp = 0.2, dur = 5, detune = 0, level=0|
-    var sig = Blip.ar(freq + (freq * detune), 3) * EnvGen.kr(Env.adsr(0.01, 0.1, 0.4, 0.1), doneAction: 0);
+    var sig = Blip.ar(freq + (freq * detune), 3);
 	Out.ar(0, sig!2 * amp * level.lag(1));
 }).add;
 
@@ -193,7 +193,7 @@ u = UserView(w, Rect(0, 0, 1024, 500))
     ~cello.set(\level, 1);
     ~flute.set(\level, 1);
     ~clarinet.set(\level, 1);
-	~trumpet.set(\level, 1);'
+    ~trumpet.set(\level, 1);
     ~horn.set(\level, 1);
 };
 ~slider.mouseUpAction = {
@@ -252,7 +252,7 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 	//~temperatureSynth.set(\frequency, linexp(temperature, -20, 40, 110, 880));
 
 	// Calculate detune factor based on temperature
-    var detune = linlin(temperature, -20, 40, -0.5, 0.5);  // Detune from -0.05 (cold) to 0.05 (warm)
+    var detune = linlin(temperature, -20, 40, -0.8, 0.8);  // Detune from -0.05 (cold) to 0.05 (warm)
 
     // Set the frequency of the instruments and apply the detune
     ~oboe.set(\freq, 440, \detune, detune);
