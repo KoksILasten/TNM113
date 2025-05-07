@@ -58,6 +58,25 @@ SynthDef(\horn, {
 	Out.ar(0, sig!2 * amp * level.lag(1));
 }).add;
 
+SynthDef(\weatherPlayer, {
+    |bufnum, amp = 0.5, rate = 1.0, modFreq = 0.25, modDepth = 0.1|
+
+    var modSignal, audio;
+
+    // Generate modulation for a subtle natural effect
+    modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
+
+    // Play the buffer with modulation
+    audio = PlayBuf.ar(1, bufnum, rate * modSignal, loop: 1);
+
+    // Apply a simple envelope
+    audio = audio * EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1), doneAction: 0) * amp;
+
+    // Output to stereo
+    Out.ar(0, audio!2);
+}).add;
+
+
 
 SynthDef(\temperatureSynth, { arg frequency = 220, level = 0;
 	var output = SinOsc.ar(freq: frequency, mul: 0.3) * level.lag(0.5);
@@ -68,11 +87,16 @@ SynthDef(\temperatureSynth, { arg frequency = 220, level = 0;
 )
 
 (
+//Weather sounds
+//Cant read anything because this fucking language is a fucking joke. Actually fucking sucks. You can load them together but not the entire block
+~sunshineBuffer = Buffer.read(s, "sunshine.wav");
+~snowfallBuffer = Buffer.read(s, "snowfall.wav");
+~rainfallBuffer = Buffer.read(s, "rain.wav");
+
 // Flaggor som håller koll på vädret
 ~sunFlag = false;
 ~rainFlag = false;
 ~snowFlag = false;
-
 // Synthinstansen för temperaturen
 ~temperatureSynth = Synth.new(\temperatureSynth);
 
@@ -182,8 +206,6 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 // -------------------------|||||-------------------------
 
 
-
-
 // När slidern klickas spelas ljudet från temperatursynthen upp
 ~slider.mouseDownAction = {
 	//~temperatureSynth.set(\level, 1);
@@ -201,7 +223,7 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 	    ~oboe.set(\level, 0);
     ~violin.set(\level, 0);
     ~viola.set(\level, 0);
-    ~cello.set(\level, 0);
+    ~cello.set(\level, 1);
     ~flute.set(\level, 0);
     ~clarinet.set(\level, 0);
     ~trumpet.set(\level, 0);
@@ -212,22 +234,31 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 ~sunAction = {
 	if (~sunFlag) {
 		("Sun").postln;
+		~sunSound = Synth(\weatherPlayer, [\bufnum, ~sunshineBuffer.bufnum, \amp, 0.5]);
 	} {
 		("No sun").postln;
+		~sunSound.free;
+        ~sunSound = nil;
 	};
 };
 ~rainAction = {
 	if (~rainFlag) {
 		("Rain").postln;
+		~rainSound = Synth(\weatherPlayer, [\bufnum, ~rainfallBuffer.bufnum, \amp, 0.5]);
 	} {
 		("No rain").postln;
+		~rainSound.free;
+        ~rainSound = nil;
 	};
 };
 ~snowAction = {
 	if (~snowFlag) {
 		("Snow").postln;
+		~snowSound = Synth(\weatherPlayer, [\bufnum, ~snowfallBuffer.bufnum, \amp, 0.5]);
 	} {
 		("No snow").postln;
+		~snowSound.free;
+        ~snowSound = nil;
 	};
 };
 
@@ -252,7 +283,7 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 	//~temperatureSynth.set(\frequency, linexp(temperature, -20, 40, 110, 880));
 
 	// Calculate detune factor based on temperature
-    var detune = linlin(temperature, -20, 40, -0.8, 0.8);  // Detune from -0.05 (cold) to 0.05 (warm)
+	var detune = linlin(temperature, -20, 40, -0.8, 0.0);  // Detune from -0.8 (cold) to 0.8 (warm)
 
     // Set the frequency of the instruments and apply the detune
     ~oboe.set(\freq, 440, \detune, detune);
@@ -265,10 +296,6 @@ u = UserView(w, Rect(0, 0, 1024, 500))
     ~horn.set(\freq, 220, \detune, detune);
 
 
-
-
-
-
 	// Följande justerar bakgrundsfärgen i GUIt
 	hue = linlin(temperature, -20, 40, 0.6, 0.1);
 	if (temperature >= 0) {
@@ -278,14 +305,29 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 	};
 	~text.string_(string);
 	u.background_(Color.hsv(hue, 0.2, 1, 0.5));
-
 });
-
-
 
 
 // Följande stänger fönstret när processen stängs
 CmdPeriod.doOnce({
+
+	//free weather synths
+	if(~sunSound.notNil, { ~sunSound.free; });
+    if(~rainSound.notNil, { ~rainSound.free; });
+    if(~snowSound.notNil, { ~snowSound.free; });
+
+    // Free orchestra synths
+    ~oboe.free;
+	~violin.free;
+	~viola.free;
+	~cello.free;
+    ~flute.free;
+	~clarinet.free;
+	~trumpet.free;
+	~horn.free;
+
+	~temperatureSynth.free;
+
 	w.free;
 	w.close;
 });
