@@ -66,12 +66,11 @@ SynthDef(\weatherPlayer, {
     // Generate modulation for a subtle natural effect
     //modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
 
-    // Play the buffer
+    // Play the buffer with modulation
     audio = PlayBuf.ar(1, bufnum, rate, loop: 1);
-	//audio = LPF.ar(audio, 880);
 
     // Apply a simple envelope
-    audio = audio * EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1, curve: -2), doneAction: 0) * amp;
+    audio = audio * amp *EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1), doneAction: 0);
 
     // Output to stereo
     Out.ar(0, audio!2);
@@ -90,9 +89,9 @@ SynthDef(\temperatureSynth, { arg frequency = 220, level = 0;
 (
 //Weather sounds
 //Cant read anything because this fucking language is a fucking joke. Actually fucking sucks. You can load them together but not the entire block
-~sunshineBuffer = Buffer.read(s, "sunshine.wav");
-~snowfallBuffer = Buffer.read(s, "snowfall.wav");
-~rainfallBuffer = Buffer.read(s, "rain.wav");
+~sunshineBuffer = Buffer.read(s, "compiledSunshine.wav");
+~snowfallBuffer = Buffer.read(s, "snowfall2.wav",bufnum:1);
+~rainfallBuffer = Buffer.read(s, "rainZelda.wav");
 
 // Flaggor som håller koll på vädret
 ~sunFlag = false;
@@ -235,7 +234,7 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 ~sunAction = {
 	if (~sunFlag) {
 		("Sun").postln;
-		~sunSound = Synth(\weatherPlayer, [\bufnum, ~sunshineBuffer.bufnum, \amp, 0.5, \rate, 0.8]);
+		~sunSound = Synth(\weatherPlayer, [\bufnum, ~sunshineBuffer.bufnum]);
 	} {
 		("No sun").postln;
 		~sunSound.free;
@@ -255,7 +254,7 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 ~snowAction = {
 	if (~snowFlag) {
 		("Snow").postln;
-		~snowSound = Synth(\weatherPlayer, [\bufnum, ~snowfallBuffer.bufnum, \amp, 0.5, \rate, 0.6]);
+		~snowSound = Synth(\weatherPlayer, [\bufnum, ~snowfallBuffer.bufnum, \amp, 0.5]);
 	} {
 		("No snow").postln;
 		~snowSound.free;
@@ -284,18 +283,16 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 	//~temperatureSynth.set(\frequency, linexp(temperature, -20, 40, 110, 880));
 
 	// Calculate detune factor based on temperature
-	var detune = linlin(temperature, -20, 40, -0.8, 0.2);
-	var detuneTwo = linlin(temperature, -20, 40, -0.3, 0.2);
-	var detuneThree = linlin(temperature, -20, 40, -0.1, 0.2);
+	var detune = linlin(temperature, -20, 40, -0.8, 0.0);  // Detune from -0.8 (cold) to 0.8 (warm)
 
     // Set the frequency of the instruments and apply the detune
-    ~oboe.set(\freq, 440, \detune, detuneTwo);
+    ~oboe.set(\freq, 440, \detune, detune);
     ~violin.set(\freq, 440, \detune, detune);
-    ~viola.set(\freq, 440, \detune, detuneTwo);
-    ~cello.set(\freq, 220, \detune, detuneThree);
-    ~flute.set(\freq, 440, \detune, detuneTwo);
-    ~clarinet.set(\freq, 440, \detune, detuneThree);
-    ~trumpet.set(\freq, 440, \detune, detuneTwo);
+    ~viola.set(\freq, 440, \detune, detune);
+    ~cello.set(\freq, 220, \detune, detune);
+    ~flute.set(\freq, 440, \detune, detune);
+    ~clarinet.set(\freq, 440, \detune, detune);
+    ~trumpet.set(\freq, 440, \detune, detune);
     ~horn.set(\freq, 220, \detune, detune);
 
 
