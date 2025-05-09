@@ -66,7 +66,7 @@ SynthDef(\weatherPlayer, {
     // Generate modulation for a subtle natural effect
     //modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
 
-    // Play the buffer with modulation
+    // Play the buffer
     audio = PlayBuf.ar(1, bufnum, rate, loop: 1);
 
     // Apply a simple envelope
@@ -284,15 +284,16 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 
 	// Calculate detune factor based on temperature
 	var detune = linlin(temperature, -20, 40, -0.8, 0.0);  // Detune from -0.8 (cold) to 0.8 (warm)
+	var detuneTwo = linlin(temperature, -20, 40, -0.3, 0.0);
 
     // Set the frequency of the instruments and apply the detune
-    ~oboe.set(\freq, 440, \detune, detune);
+    ~oboe.set(\freq, 440, \detune, detuneTwo);
     ~violin.set(\freq, 440, \detune, detune);
-    ~viola.set(\freq, 440, \detune, detune);
+    ~viola.set(\freq, 440, \detune, detuneTwo);
     ~cello.set(\freq, 220, \detune, detune);
-    ~flute.set(\freq, 440, \detune, detune);
+    ~flute.set(\freq, 440, \detune, detuneTwo);
     ~clarinet.set(\freq, 440, \detune, detune);
-    ~trumpet.set(\freq, 440, \detune, detune);
+    ~trumpet.set(\freq, 440, \detune, detuneTwo);
     ~horn.set(\freq, 220, \detune, detune);
 
 
