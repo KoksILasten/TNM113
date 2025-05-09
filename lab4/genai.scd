@@ -59,7 +59,7 @@ SynthDef(\horn, {
 }).add;
 
 SynthDef(\weatherPlayer, {
-    |bufnum, amp = 0.5, rate = 1.0, modFreq = 0.25, modDepth = 0.1|
+    |bufnum, amp = 0.5, rate = 0.8, modFreq = 0.25, modDepth = 0.1|
 
     var modSignal, audio;
 
@@ -68,9 +68,10 @@ SynthDef(\weatherPlayer, {
 
     // Play the buffer
     audio = PlayBuf.ar(1, bufnum, rate, loop: 1);
+	//audio = LPF.ar(audio, 880);
 
     // Apply a simple envelope
-    audio = audio * EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1), doneAction: 0) * amp;
+    audio = audio * EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1, curve: -2), doneAction: 0) * amp;
 
     // Output to stereo
     Out.ar(0, audio!2);
@@ -234,7 +235,7 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 ~sunAction = {
 	if (~sunFlag) {
 		("Sun").postln;
-		~sunSound = Synth(\weatherPlayer, [\bufnum, ~sunshineBuffer.bufnum, \amp, 0.5]);
+		~sunSound = Synth(\weatherPlayer, [\bufnum, ~sunshineBuffer.bufnum, \amp, 0.5, \rate, 0.8]);
 	} {
 		("No sun").postln;
 		~sunSound.free;
@@ -254,7 +255,7 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 ~snowAction = {
 	if (~snowFlag) {
 		("Snow").postln;
-		~snowSound = Synth(\weatherPlayer, [\bufnum, ~snowfallBuffer.bufnum, \amp, 0.5]);
+		~snowSound = Synth(\weatherPlayer, [\bufnum, ~snowfallBuffer.bufnum, \amp, 0.5, \rate, 0.6]);
 	} {
 		("No snow").postln;
 		~snowSound.free;
@@ -283,16 +284,17 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 	//~temperatureSynth.set(\frequency, linexp(temperature, -20, 40, 110, 880));
 
 	// Calculate detune factor based on temperature
-	var detune = linlin(temperature, -20, 40, -0.8, 0.0);  // Detune from -0.8 (cold) to 0.8 (warm)
-	var detuneTwo = linlin(temperature, -20, 40, -0.3, 0.0);
+	var detune = linlin(temperature, -20, 40, -0.8, 0.2);
+	var detuneTwo = linlin(temperature, -20, 40, -0.3, 0.2);
+	var detuneThree = linlin(temperature, -20, 40, -0.1, 0.2);
 
     // Set the frequency of the instruments and apply the detune
     ~oboe.set(\freq, 440, \detune, detuneTwo);
     ~violin.set(\freq, 440, \detune, detune);
     ~viola.set(\freq, 440, \detune, detuneTwo);
-    ~cello.set(\freq, 220, \detune, detune);
+    ~cello.set(\freq, 220, \detune, detuneThree);
     ~flute.set(\freq, 440, \detune, detuneTwo);
-    ~clarinet.set(\freq, 440, \detune, detune);
+    ~clarinet.set(\freq, 440, \detune, detuneThree);
     ~trumpet.set(\freq, 440, \detune, detuneTwo);
     ~horn.set(\freq, 220, \detune, detune);
 
