@@ -64,10 +64,10 @@ SynthDef(\weatherPlayer, {
     var modSignal, audio;
 
     // Generate modulation for a subtle natural effect
-    modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
+    //modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
 
     // Play the buffer with modulation
-    audio = PlayBuf.ar(1, bufnum, rate * modSignal, loop: 1);
+    audio = PlayBuf.ar(1, bufnum, rate, loop: 1);
 
     // Apply a simple envelope
     audio = audio * EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1), doneAction: 0) * amp;
@@ -223,7 +223,7 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 	    ~oboe.set(\level, 0);
     ~violin.set(\level, 0);
     ~viola.set(\level, 0);
-    ~cello.set(\level, 1);
+    ~cello.set(\level, 0);
     ~flute.set(\level, 0);
     ~clarinet.set(\level, 0);
     ~trumpet.set(\level, 0);
