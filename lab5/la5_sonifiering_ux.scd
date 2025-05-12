@@ -23,16 +23,39 @@ SynthDef(\dataSonification, { arg freq;
     Out.ar(0, {output}!2);
 }).add;
 
-SynthDef(\unstableOutputWarning,{ | freq |
+SynthDef(\unstableOutputWarning,{ arg freq = 220, level = 0;
 // unstable frequencies not in harmony
 	var output = [
 		SinOsc.ar(freq),
-		SinOsc.ar(freq/1.2)
+		SinOsc.ar(freq/1.2),
 	];
-	output = LPF.ar(output/2, freq: freq);
+	output = LPF.ar(output/2, freq: 440);
 
-	Out.ar(0, {output}!2);
+	Out.ar(0, {output * level.lag(1)}!2);
 }).add; //unstab warning end
+
+SynthDef(\bipolarWarning,{ arg freq = 220, level = 0;
+
+	var output = [
+		SinOsc.ar(freq),
+		SinOsc.ar(freq*1.3),
+	];
+
+	output = output + output / 4;
+
+	Out.ar(0, {output/2 * level.lag(1)}!2);
+}).add; //unstab warning end
+
+SynthDef(\heatWarning,{ arg freq = 2500, level = 0;
+// unstable frequencies not in harmony
+    var freqy = freq + LFNoise1.kr(2!2).range(-50, 50); // Add instability
+	var amp = Env.adsr(0.1, 3).kr; // Percussive envelope
+    var sig = SinOsc.ar(freqy) * amp; // Whistle core
+    var crackle = PinkNoise.ar(0.2 * LFNoise1.kr(10!2).range(0, 1)); // Boiling noise
+    var filter = BPF.ar(crackle, freq * 2, 0.1); // Filter noise to match pitch
+	Out.ar(0, {(sig + filter) * 0.5 * level.lag(1)}!2);
+}).add; //unstab warning end
+
 
 ) // end of defs
 
@@ -40,7 +63,9 @@ SynthDef(\unstableOutputWarning,{ | freq |
 (
 // Följande registrerar dataSonification synthdefinitionen på servern
 ~dataSynth = Synth.new(\dataSonification).register;
-//~unstableSynth = Synth.new(\unstableOutputWarning).register;
+~unstableSynth = Synth.new(\unstableOutputWarning).register;
+~bipolarSynth = Synth.new(\bipolarWarning).register;
+~heatSynth = Synth.new(\heatWarning).register;
 
 // Följande är en OSC-lyssnare för level-meddelanden
 OSCdef(\levelListener, { arg inputmsg;
@@ -68,23 +93,38 @@ OSCdef(\dataListener, {
 				switch (~errorMessage,
 					'Bipolar capacity low', {
 						~dataSynth.set(\freq, frequency * 2);
-						~errorMessage.postln;
+						~unstableSynth.set(\level, 0);
+						~bipolarSynth.set(\level, 1, \freq, 440);
+						~heatSynth.set(\level, 0);
+						//~errorMessage.postln;
 					},
 					'Zero target null', {
 						~dataSynth.set(\freq, frequency * 2.5);
-						~errorMessage.postln;
+						~unstableSynth.set(\level, 0);
+						~bipolarSynth.set(\level, 0);
+						~heatSynth.set(\level, 0);
+						//~errorMessage.postln;
 					},
 					'Risk for overheating', {
 						~dataSynth.set(\freq, frequency * 3);
-						~errorMessage.postln;
+						~unstableSynth.set(\level, 0);
+						~bipolarSynth.set(\level, 0);
+						~heatSynth.set(\level, 1, \freq, 1600);
+						//~errorMessage.postln;
 					},
 					'Unstable output', {
-						~dataSynth.set(\freq, frequency * 3.5);
+						//~dataSynth.set(\freq, frequency * 3.5);
+						~unstableSynth.set(\freq, frequency, \level, 1);
+						~bipolarSynth.set(\level, 0);
+						~heatSynth.set(\level, 0);
 						~errorMessage.postln;
 					},
 					{
 						// default fallback
 						~dataSynth.set(\freq, frequency);
+						~unstableSynth.set(\level, 0);
+						~bipolarSynth.set(\level, 0);
+						~heatSynth.set(\level, 0);
 						"No matching error — using default frequency".postln;
 					}
 				);
