@@ -23,13 +23,25 @@ SynthDef(\dataSonification, { arg freq;
     Out.ar(0, {output}!2);
 }).add;
 
+SynthDef(\unstableOutputWarning,{ | freq |
+// unstable frequencies not in harmony
+	var output = [
+		SinOsc.ar(freq),
+		SinOsc.ar(freq/1.2)
+	];
+	output = LPF.ar(output/2, freq: freq);
 
-)
+	Out.ar(0, {output}!2);
+}).add; //unstab warning end
+
+) // end of defs
 
 
 (
 // Följande registrerar dataSonification synthdefinitionen på servern
 ~dataSynth = Synth.new(\dataSonification).register;
+~unstableSynth = Synth.new(\unstableOutputWarning).register;
+
 
 // Följande är en OSC-lyssnare för level-meddelanden
 OSCdef(\levelListener, { arg inputmsg;
@@ -44,21 +56,61 @@ OSCdef(\levelListener, { arg inputmsg;
 }, 'level');
 
 // Följande är en OSC-lyssnare för data-meddelanden
-OSCdef(\dataListener, { arg inputmsg;
-	if (inputmsg.size > 1) {
-		// Ta hand om meddelandet om det inte är samma som förra
-		if (inputmsg[1].asInteger != ~currentData) {
-			var frequency;
-			// Detta plockar ut datavärdet ur meddelandet som ett heltal
-			// och sparar i environment-variabeln
-			~currentData = inputmsg[1].asInteger;
-			// Följande skickar data-nivån (som en int) till en mapp-funktion
-			// som returnerar värdet och sparar det i frequency-variabeln
-			frequency = ~mapPitch.value(~currentData);
-			// Följande skickar värdet, frekvensen, till synthdefinitionen
-			~dataSynth.set(\freq, frequency);
-		};
-	};
+//Nu funkar den iaf
+// Följande är en OSC-lyssnare för level-meddelanden
+OSCdef(\levelListener, { arg inputmsg;
+    if (inputmsg.size > 1) {
+        // Ta hand om meddelandet om det inte är samma som förra
+        if (inputmsg[1].asInteger != ~statusLevel) {
+            // Detta plockar ut level ur meddelandet som ett heltal
+            // och sparar i environment-variabeln
+            ~statusLevel = inputmsg[1].asInteger;
+        };
+    };
+}, 'level');
+
+
+OSCdef(\dataListener, {
+    arg inputmsg;
+    var frequency;
+
+    if (inputmsg.size > 1) {
+        if (inputmsg[1].asInteger != ~currentData) {
+            ~currentData = inputmsg[1].asInteger;
+            frequency = ~mapPitch.value(~currentData);
+
+            if (~errorMessage.notNil) {
+                switch (~errorMessage,
+                    'Bipolar capacity low', {
+                        ~dataSynth.set(\freq, frequency * 2);
+                        //~errorMessage.postln;
+                    },
+                    'Zero target null', {
+                        ~dataSynth.set(\freq, frequency * 2.5);
+                        //~errorMessage.postln;
+                    },
+                    'Risk for overheating', {
+                        ~dataSynth.set(\freq, frequency * 3);
+                        //~errorMessage.postln;
+                    },
+                    'Unstable output', {
+                        //~dataSynth.set(\freq, frequency * 3.5);
+						~unstableSynth.set(\freq, frequency);
+                        //~errorMessage.postln;
+                    },
+                    {
+                        // default fallback
+                        ~dataSynth.set(\freq, frequency);
+                        //"No matching error — using default frequency".postln;
+                    }
+                );
+            } {
+                // No error message
+                ~dataSynth.set(\freq, frequency);
+                "No error".postln;
+            }
+        }
+    };
 }, 'data');
 
 // Följande är en OSC-lyssnare för fel-meddelanden
