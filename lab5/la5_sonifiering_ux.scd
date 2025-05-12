@@ -40,8 +40,7 @@ SynthDef(\unstableOutputWarning,{ | freq |
 (
 // Följande registrerar dataSonification synthdefinitionen på servern
 ~dataSynth = Synth.new(\dataSonification).register;
-~unstableSynth = Synth.new(\unstableOutputWarning).register;
-
+//~unstableSynth = Synth.new(\unstableOutputWarning).register;
 
 // Följande är en OSC-lyssnare för level-meddelanden
 OSCdef(\levelListener, { arg inputmsg;
@@ -55,63 +54,49 @@ OSCdef(\levelListener, { arg inputmsg;
 	};
 }, 'level');
 
-// Följande är en OSC-lyssnare för data-meddelanden
-//Nu funkar den iaf
-// Följande är en OSC-lyssnare för level-meddelanden
-OSCdef(\levelListener, { arg inputmsg;
-    if (inputmsg.size > 1) {
-        // Ta hand om meddelandet om det inte är samma som förra
-        if (inputmsg[1].asInteger != ~statusLevel) {
-            // Detta plockar ut level ur meddelandet som ett heltal
-            // och sparar i environment-variabeln
-            ~statusLevel = inputmsg[1].asInteger;
-        };
-    };
-}, 'level');
-
 
 OSCdef(\dataListener, {
-    arg inputmsg;
-    var frequency;
+	arg inputmsg;
+	var frequency;
 
-    if (inputmsg.size > 1) {
-        if (inputmsg[1].asInteger != ~currentData) {
-            ~currentData = inputmsg[1].asInteger;
-            frequency = ~mapPitch.value(~currentData);
+	if (inputmsg.size > 1) {
+		if (inputmsg[1].asInteger != ~currentData) {
+			~currentData = inputmsg[1].asInteger;
+			frequency = ~mapPitch.value(~currentData);
 
-            if (~errorMessage.notNil) {
-                switch (~errorMessage,
-                    'Bipolar capacity low', {
-                        ~dataSynth.set(\freq, frequency * 2);
-                        //~errorMessage.postln;
-                    },
-                    'Zero target null', {
-                        ~dataSynth.set(\freq, frequency * 2.5);
-                        //~errorMessage.postln;
-                    },
-                    'Risk for overheating', {
-                        ~dataSynth.set(\freq, frequency * 3);
-                        //~errorMessage.postln;
-                    },
-                    'Unstable output', {
-                        //~dataSynth.set(\freq, frequency * 3.5);
-						~unstableSynth.set(\freq, frequency);
-                        //~errorMessage.postln;
-                    },
-                    {
-                        // default fallback
-                        ~dataSynth.set(\freq, frequency);
-                        //"No matching error — using default frequency".postln;
-                    }
-                );
-            } {
-                // No error message
-                ~dataSynth.set(\freq, frequency);
-                "No error".postln;
-            }
-        }
-    };
+			if (~errorMessage.notNil) {
+				switch (~errorMessage,
+					'Bipolar capacity low', {
+						~dataSynth.set(\freq, frequency * 2);
+						~errorMessage.postln;
+					},
+					'Zero target null', {
+						~dataSynth.set(\freq, frequency * 2.5);
+						~errorMessage.postln;
+					},
+					'Risk for overheating', {
+						~dataSynth.set(\freq, frequency * 3);
+						~errorMessage.postln;
+					},
+					'Unstable output', {
+						~dataSynth.set(\freq, frequency * 3.5);
+						~errorMessage.postln;
+					},
+					{
+						// default fallback
+						~dataSynth.set(\freq, frequency);
+						"No matching error — using default frequency".postln;
+					}
+				);
+			} {
+				// No error message
+				~dataSynth.set(\freq, frequency);
+				"No error".postln;
+			}
+		}
+	};
 }, 'data');
+
 
 // Följande är en OSC-lyssnare för fel-meddelanden
 OSCdef(\errorListener, { arg inputmsg;
@@ -122,24 +107,6 @@ OSCdef(\errorListener, { arg inputmsg;
 		// Detta plockar ut felmeddelandet ur meddelandet
 		// och sparar i environment-variabeln
 		~errorMessage = inputmsg[1];
-		case
-		{ ~errorMessage == 'Bipolar capacity low' } {
-
-			~dataSynth.set(\freq, frequency*2);
-
-		}
-		{ ~errorMessage == 'Zero target null' } {
-
-			~dataSynth.set(\freq, frequency*2,5);
-
-		}
-		{ ~errorMessage == 'Risk for overheating' } {
-
-			~dataSynth.set(\freq, frequency*3);
-
-		}{ ~errorMessage == nil} {
-
-		};
 		~errorMessage.postln;
 	};
 }, 'error');
