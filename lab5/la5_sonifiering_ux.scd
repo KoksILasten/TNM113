@@ -4,15 +4,23 @@ s.boot; // en rad kod körs med <Shift> och <Enter>
 s.quit;
 // Start oscilloscope
 s.scope;
+s.plotTree;
 
 // När servern är igång skickar man över en eller flera synth definitioner till serven.
 (
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
 
 SynthDef(\dataSonification, { arg freq;
-	var output = LFTri.ar(freq);
+	    var output = [
+        SinOsc.ar(freq*2),
+        SinOsc.ar(freq),
 
-	Out.ar(0, {output}!2);
+    ];
+    var pulse = LFPulse.kr(10, width: 0.1);
+
+    output = LPF.ar(output/2 * pulse, freq: freq);
+
+    Out.ar(0, {output}!2);
 }).add;
 
 
@@ -55,10 +63,31 @@ OSCdef(\dataListener, { arg inputmsg;
 
 // Följande är en OSC-lyssnare för fel-meddelanden
 OSCdef(\errorListener, { arg inputmsg;
+	var frequency, level;
+	frequency = ~mapPitch.value(~currentData);
+
 	if (inputmsg.size > 1) {
 		// Detta plockar ut felmeddelandet ur meddelandet
 		// och sparar i environment-variabeln
 		~errorMessage = inputmsg[1];
+		case
+		{ ~errorMessage == 'Bipolar capacity low' } {
+
+			~dataSynth.set(\freq, frequency*2);
+
+		}
+		{ ~errorMessage == 'Zero target null' } {
+
+			~dataSynth.set(\freq, frequency*2,5);
+
+		}
+		{ ~errorMessage == 'Risk for overheating' } {
+
+			~dataSynth.set(\freq, frequency*3);
+
+		}{ ~errorMessage == nil} {
+
+		};
 		~errorMessage.postln;
 	};
 }, 'error');
