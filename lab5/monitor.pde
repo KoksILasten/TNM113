@@ -217,7 +217,6 @@ void checkErrors() {
       error1Flag = false;
       messageTimes[0] = millis();
       errors = append(errors, messages[1]);
-      sendMessage(messages[1]);
       bipolarPos = errors.length - 1;
       bipolarFlag = false;
       messageCount = append(messageCount, 150);
@@ -226,7 +225,6 @@ void checkErrors() {
       error2Flag = false;
       messageTimes[1] = millis();
       errors = append(errors, messages[2]);
-      sendMessage(messages[2]);
       unstablePos = errors.length - 1;
       unstableFlag = false;
       messageCount = append(messageCount, 150);
@@ -235,7 +233,6 @@ void checkErrors() {
       error3Flag = false;
       messageTimes[2] = millis();
       errors = append(errors, messages[0]);
-      sendMessage(messages[0]);
       overheatPos = errors.length - 1;
       overheatFlag = false;
       messageCount = append(messageCount, 150);
@@ -244,11 +241,12 @@ void checkErrors() {
       error4Flag = false;
       messageTimes[3] = millis();
       errors = append(errors, messages[3]);
-      sendMessage(messages[3]);
+      
       zeroPos = errors.length - 1;
       zeroFlag = false;
       messageCount = append(messageCount, 150);
     }
+    sendMessage(errors);
   }
   if (errors.length > 0) {
     for (int i = 0; i < messageCount.length; i++) {
@@ -485,11 +483,19 @@ void updateData() {
   oldValue = value;
 }
 
-void sendMessage( String errorMessage) {
-  OscMessage msg = new OscMessage("/error");
-  msg.add(errorMessage);
+void sendMessage(String[] errors) {
+  OscMessage msg = new OscMessage("/error"); // Must match the OSCdef name in SuperCollider
+
+  // Add each error string as a separate argument
+  for (int i = 0; i < errors.length; i++) {
+    msg.add(errors[i]);
+  }
+
+  // Send the message
   osc.send(msg, supercollider);
 }
+
+
 
 void sendData( float dataPoint ) {
   OscMessage msg = new OscMessage("/data");
