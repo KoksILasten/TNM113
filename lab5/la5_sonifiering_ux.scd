@@ -58,7 +58,7 @@ SynthDef(\zeroTargetNull,{ arg freq = 220, level = 0;
 	output = output * pulse;
 
 	Out.ar(0, {output/2 * level.lag(1)}!2);
-}).add; //unstab warning end
+}).add; //zero warning end
 
 SynthDef(\heatWarning,{ arg freq = 2500, level = 0;
 // unstable frequencies not in harmony
@@ -68,6 +68,21 @@ SynthDef(\heatWarning,{ arg freq = 2500, level = 0;
     var crackle = PinkNoise.ar(0.2 * LFNoise1.kr(10!2).range(0, 1)); // Boiling noise
     var filter = BPF.ar(crackle, freq * 2, 0.1); // Filter noise to match pitch
 	Out.ar(0, {(sig + filter) * 0.5 * level.lag(1)}!2);
+}).add; //heat warning end
+
+SynthDef(\unstable,{ arg freq = 220, level = 0;
+
+	var output = [
+		SinOsc.ar(freq),
+		SinOsc.ar(freq, 0.02),
+	];
+
+
+	var combFilter = CombN.ar(output, maxdelaytime: 0.2);
+
+	output = combFilter;
+
+	Out.ar(0, {combFilter/2 * level.lag(1)}!2);
 }).add; //unstab warning end
 
 
@@ -93,20 +108,20 @@ OSCdef(\levelListener, { arg inputmsg;
 
 			if (~statusLevel.notNil) {
 				switch (~statusLevel,
-					'0', {
-						~dataSynth.set(\width, 0.4);
-						"skibidi".postln;
+					0, {
+						~dataSynth.set(\width, 0.8);
+						//"skibidi".postln;
 
 					},
-					'1', {
-						~dataSynth.set(\width, 0.3);
+					1, {
+						~dataSynth.set(\width, 0.6);
 
 					},
-					'2', {
-						~dataSynth.set(\freq, 0.2);
+					2, {
+						~dataSynth.set(\freq, 0.4);
 
 					},
-					'3', {
+					3, {
 						~dataSynth.set(\width, 0.1);
 					},
 					{
