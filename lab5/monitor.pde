@@ -246,6 +246,10 @@ void checkErrors() {
       zeroFlag = false;
       messageCount = append(messageCount, 150);
     }
+    for (int i = 0; i < errors.length; i++){
+    print(errors[i]);
+    }
+    print("\n");
     sendMessage(errors);
   }
   if (errors.length > 0) {
