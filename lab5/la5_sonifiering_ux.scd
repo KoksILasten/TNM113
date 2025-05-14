@@ -10,13 +10,13 @@ s.plotTree;
 (
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
 
-SynthDef(\dataSonification, { arg freq;
+SynthDef(\dataSonification, { arg freq, width = 0.1;
 	    var output = [
         SinOsc.ar(freq*2),
         SinOsc.ar(freq),
 
     ];
-    var pulse = LFPulse.kr(10, width: 0.1);
+    var pulse = LFPulse.kr(10, width: width);
 
     output = LPF.ar(output/2 * pulse, freq: freq);
 
@@ -46,6 +46,20 @@ SynthDef(\bipolarWarning,{ arg freq = 220, level = 0;
 	Out.ar(0, {output/2 * level.lag(1)}!2);
 }).add; //unstab warning end
 
+
+SynthDef(\zeroTargetNull,{ arg freq = 220, level = 0;
+
+	var output = [
+		LFTri.ar(freq),
+	];
+
+	var pulse = LFPulse.ar(5, width: 0.3);
+
+	output = output * pulse;
+
+	Out.ar(0, {output/2 * level.lag(1)}!2);
+}).add; //unstab warning end
+
 SynthDef(\heatWarning,{ arg freq = 2500, level = 0;
 // unstable frequencies not in harmony
     var freqy = freq + LFNoise1.kr(2!2).range(-50, 50); // Add instability
@@ -66,6 +80,7 @@ SynthDef(\heatWarning,{ arg freq = 2500, level = 0;
 ~unstableSynth = Synth.new(\unstableOutputWarning).register;
 ~bipolarSynth = Synth.new(\bipolarWarning).register;
 ~heatSynth = Synth.new(\heatWarning).register;
+~nullSynth = Synth.new(\zeroTargetNull).register;
 
 // Följande är en OSC-lyssnare för level-meddelanden
 OSCdef(\levelListener, { arg inputmsg;
@@ -75,6 +90,37 @@ OSCdef(\levelListener, { arg inputmsg;
 			// Detta plockar ut level ur meddelandet som ett heltal
 			// och sparar i environment-variabeln
 			~statusLevel = inputmsg[1].asInteger;
+
+			if (~statusLevel.notNil) {
+				switch (~statusLevel,
+					'0', {
+						~dataSynth.set(\width, 0.4);
+						"skibidi".postln;
+
+					},
+					'1', {
+						~dataSynth.set(\width, 0.3);
+
+					},
+					'2', {
+						~dataSynth.set(\freq, 0.2);
+
+					},
+					'3', {
+						~dataSynth.set(\width, 0.1);
+					},
+					{
+						// default fallback
+						//~dataSynth.set(\freq, frequency);
+						inputmsg[1].postln;
+					}
+				);
+			} {
+				// No error message
+				~dataSynth.set(\width, 0.4);
+				"No error".postln;
+			}
+
 		};
 	};
 }, 'level');
@@ -89,27 +135,33 @@ OSCdef(\dataListener, {
 			~currentData = inputmsg[1].asInteger;
 			frequency = ~mapPitch.value(~currentData);
 
+			~dataSynth.set(\freq, frequency);
+
+
 			if (~errorMessage.notNil) {
 				switch (~errorMessage,
 					'Bipolar capacity low', {
 						~dataSynth.set(\freq, frequency * 2);
+						~bipolarSynth.set(\level, 1, \freq, 220);
 						~unstableSynth.set(\level, 0);
-						~bipolarSynth.set(\level, 1, \freq, 440);
 						~heatSynth.set(\level, 0);
+						~nullSynth.set(\level, 0);
 						//~errorMessage.postln;
 					},
 					'Zero target null', {
-						~dataSynth.set(\freq, frequency * 2.5);
+						//~dataSynth.set(\freq, frequency * 2.5);
 						~unstableSynth.set(\level, 0);
 						~bipolarSynth.set(\level, 0);
 						~heatSynth.set(\level, 0);
+						~nullSynth.set(\level, 1, \freq, 660);
 						//~errorMessage.postln;
 					},
 					'Risk for overheating', {
-						~dataSynth.set(\freq, frequency * 3);
+						//~dataSynth.set(\freq, frequency * 3);
 						~unstableSynth.set(\level, 0);
 						~bipolarSynth.set(\level, 0);
 						~heatSynth.set(\level, 1, \freq, 1600);
+						~nullSynth.set(\level, 0);
 						//~errorMessage.postln;
 					},
 					'Unstable output', {
@@ -117,6 +169,7 @@ OSCdef(\dataListener, {
 						~unstableSynth.set(\freq, frequency, \level, 1);
 						~bipolarSynth.set(\level, 0);
 						~heatSynth.set(\level, 0);
+						~nullSynth.set(\level, 0);
 						~errorMessage.postln;
 					},
 					{
@@ -125,6 +178,7 @@ OSCdef(\dataListener, {
 						~unstableSynth.set(\level, 0);
 						~bipolarSynth.set(\level, 0);
 						~heatSynth.set(\level, 0);
+						~nullSynth.set(\level, 0);
 						"No matching error — using default frequency".postln;
 					}
 				);
