@@ -129,84 +129,78 @@ OSCdef(\levelListener, { arg inputmsg;
 	};
 }, 'level');
 
+~errorMessage;
 
 OSCdef(\dataListener, {
-	arg inputmsg;
-	var frequency;
+    arg inputmsg;
+    var frequency;
 
-	if (inputmsg.size > 1) {
-		if (inputmsg[1].asInteger != ~currentData) {
-			~currentData = inputmsg[1].asInteger;
-			frequency = ~mapPitch.value(~currentData);
+    if (inputmsg.size > 1) {
+        if (inputmsg[1].asInteger != ~currentData) {
+            ~currentData = inputmsg[1].asInteger;
+            frequency = ~mapPitch.value(~currentData);
 
-			~dataSynth.set(\freq, frequency);
+            ~dataSynth.set(\freq, frequency);
 
-
-			if (~errorMessage.notNil) {
-				switch (~errorMessage,
-					'Bipolar capacity low', {
-						~dataSynth.set(\freq, frequency * 2);
-						~bipolarSynth.set(\level, 1, \freq, 220);
-						~unstableSynth.set(\level, 0);
-						~heatSynth.set(\level, 0);
-						~nullSynth.set(\level, 0);
-						//~errorMessage.postln;
-					},
-					'Zero target null', {
-						//~dataSynth.set(\freq, frequency * 2.5);
-						~unstableSynth.set(\level, 0);
-						~bipolarSynth.set(\level, 0);
-						~heatSynth.set(\level, 0);
-						~nullSynth.set(\level, 1, \freq, 660);
-						//~errorMessage.postln;
-					},
-					'Risk for overheating', {
-						//~dataSynth.set(\freq, frequency * 3);
-						~unstableSynth.set(\level, 0);
-						~bipolarSynth.set(\level, 0);
-						~heatSynth.set(\level, 1, \freq, 1600);
-						~nullSynth.set(\level, 0);
-						//~errorMessage.postln;
-					},
-					'Unstable output', {
-						//~dataSynth.set(\freq, frequency * 3.5);
-						~unstableSynth.set(\freq, frequency, \level, 1);
-						~bipolarSynth.set(\level, 0);
-						~heatSynth.set(\level, 0);
-						~nullSynth.set(\level, 0);
-						~errorMessage.postln;
-					},
-					{
-						// default fallback
-						~dataSynth.set(\freq, frequency);
-						~unstableSynth.set(\level, 0);
-						~bipolarSynth.set(\level, 0);
-						~heatSynth.set(\level, 0);
-						~nullSynth.set(\level, 0);
-						"No matching error — using default frequency".postln;
-					}
-				);
-			} {
-				// No error message
-				~dataSynth.set(\freq, frequency);
-				"No error".postln;
-			}
-		}
-	};
+            // Reactivate synths based on current errors
+            if (~errorList.notNil and: ~errorList.size > 0) {
+                ~errorList.do { |error|
+                    switch (error,
+                        'Bipolar capacity low', {
+                            ~bipolarSynth.set(\level, 1, \freq, 220);
+                        },
+                        'Zero target null', {
+                            ~nullSynth.set(\level, 1, \freq, 660);
+                        },
+                        'Risk for overheating', {
+                            ~heatSynth.set(\level, 1, \freq, 1600);
+                        },
+                        'Unstable output', {
+                            ~unstableSynth.set(\level, 1, \freq, frequency);
+                        }
+                    );
+                };
+            };
+        }
+    };
 }, 'data');
-
 
 // Följande är en OSC-lyssnare för fel-meddelanden
 OSCdef(\errorListener, { arg inputmsg;
-	var frequency, level;
-	frequency = ~mapPitch.value(~currentData);
+    var errorList, activeErrors;
 
-	if (inputmsg.size > 1) {
-		// Detta plockar ut felmeddelandet ur meddelandet
-		// och sparar i environment-variabeln
-		~errorMessage = inputmsg[1];
-		~errorMessage.postln;
-	};
+    // Extract errors from the input message
+    errorList = inputmsg.copyRange(1, inputmsg.size - 1);
+
+    // Update the global error list
+    ~errorList = errorList;
+
+    // Log errors
+    errorList.do { |err| ("Error: " ++ err).postln };
+
+    // Reset all synths
+    ~unstableSynth.set(\level, 0);
+    ~bipolarSynth.set(\level, 0);
+    ~heatSynth.set(\level, 0);
+    ~nullSynth.set(\level, 0);
+
+    // Activate synths for current errors
+    errorList.do { |error|
+        switch (error,
+            'Bipolar capacity low', {
+                ~bipolarSynth.set(\level, 1, \freq, 220);
+            },
+            'Zero target null', {
+                ~nullSynth.set(\level, 1, \freq, 660);
+            },
+            'Risk for overheating', {
+                ~heatSynth.set(\level, 1, \freq, 1600);
+            },
+            'Unstable output', {
+                ~unstableSynth.set(\level, 1, \freq, ~mapPitch.value(~currentData));
+            }
+        );
+    };
 }, 'error');
 
 

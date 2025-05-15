@@ -250,7 +250,8 @@ void checkErrors() {
     print(errors[i]);
     }
     print("\n");
-    sendMessage(errors);
+    //sendMessage(errors);
+    sendMessage(messages[3]); //{"Risk for overheating", "Bipolar capacity low", "Unstable output", "Zero target null"}
   }
   if (errors.length > 0) {
     for (int i = 0; i < messageCount.length; i++) {
@@ -494,6 +495,16 @@ void sendMessage(String[] errors) {
   for (int i = 0; i < errors.length; i++) {
     msg.add(errors[i]);
   }
+
+  // Send the message
+  osc.send(msg, supercollider);
+}
+
+void sendMessage(String errors) {
+  OscMessage msg = new OscMessage("/error"); // Must match the OSCdef name in SuperCollider
+
+  // Add each error string as a separate argument
+    msg.add(errors);
 
   // Send the message
   osc.send(msg, supercollider);
