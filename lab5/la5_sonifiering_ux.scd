@@ -18,7 +18,7 @@ SynthDef(\dataSonification, { arg freq, width = 0.1;
     ];
     var pulse = LFPulse.kr(10, width: width);
 
-    output = LPF.ar(output/2 * pulse, freq: freq);
+    output = LPF.ar(output/4 * pulse, freq: freq);
 
     Out.ar(0, {output}!2);
 }).add;
@@ -26,16 +26,15 @@ SynthDef(\dataSonification, { arg freq, width = 0.1;
 SynthDef(\unstableOutputWarning,{ arg freq = 220, level = 0;
 // unstable frequencies not in harmony
 	var output = [
-		SinOsc.ar(freq),
-		SinOsc.ar(freq, 0.02),
+		LFTri.ar(freq),
+		//LFTri.ar(freq, 0.02),
 	];
 
 
-	var combFilter = CombN.ar(output, maxdelaytime: 0.2);
-
+	var combFilter = CombN.ar(output, maxdelaytime: 0.5);
 	output = combFilter;
 
-	Out.ar(0, {combFilter/2 * level.lag(1)}!2);
+	Out.ar(0, {output/4 * level.lag(1)}!2);
 }).add; //unstab warning end
 
 SynthDef(\bipolarWarning,{ arg freq = 220, level = 0;
@@ -77,8 +76,10 @@ SynthDef(\heatWarning,{ arg freq = 2500, level = 0;
 
 ) // end of defs
 
-
+s.stopRecording;
 (
+s.record(duration: 30); //seconds recording
+thisProcess.platform.recordingsDir = "C:/Programmering/M113-Ljud/lab5/soundRecordings";
 // Följande registrerar dataSonification synthdefinitionen på servern
 ~dataSynth = Synth.new(\dataSonification).register;
 ~unstableSynth = Synth.new(\unstableOutputWarning).register;
@@ -150,7 +151,7 @@ OSCdef(\dataListener, {
                             ~bipolarSynth.set(\level, 1, \freq, 220);
                         },
                         'Zero target null', {
-                            ~nullSynth.set(\level, 1, \freq, 660);
+                            //~nullSynth.set(\level, 1, \freq, 660);
                         },
                         'Risk for overheating', {
                             ~heatSynth.set(\level, 1, \freq, 1600);
@@ -213,6 +214,7 @@ OSCdef(\errorListener, { arg inputmsg;
 
 )
 
+
 // Följande rad kollar vilken lokal address som OSC-lyssnaren använder. Denna måste
 // vara samma i båda programmen, så att "monitorGUIt" skickar på rätt address.
-NetAddr.localAddr;
+NetAddr.localAddr
