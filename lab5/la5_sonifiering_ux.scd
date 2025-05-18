@@ -26,7 +26,7 @@ SynthDef(\dataSonification, { arg freq, width = 0.1;
 SynthDef(\unstableOutputWarning,{ arg freq = 220, level = 0;
 // unstable frequencies not in harmony
 	var output = [
-		LFTri.ar(freq),
+		SinOsc.ar(freq),
 		//LFTri.ar(freq, 0.02),
 	];
 
@@ -76,10 +76,10 @@ SynthDef(\heatWarning,{ arg freq = 2500, level = 0;
 
 ) // end of defs
 
-s.stopRecording;
+//s.stopRecording;
 (
-s.record(duration: 30); //seconds recording
-thisProcess.platform.recordingsDir = "C:/Programmering/M113-Ljud/lab5/soundRecordings";
+s.record(duration: 20); //seconds recording
+thisProcess.platform.recordingsDir = "C:/Programmering/TNM113-Ljud/lab5/soundRecordings";
 // Följande registrerar dataSonification synthdefinitionen på servern
 ~dataSynth = Synth.new(\dataSonification).register;
 ~unstableSynth = Synth.new(\unstableOutputWarning).register;
@@ -100,7 +100,6 @@ OSCdef(\levelListener, { arg inputmsg;
 				switch (~statusLevel,
 					0, {
 						~dataSynth.set(\width, 0.8);
-						//"skibidi".postln;
 
 					},
 					1, {
@@ -151,7 +150,7 @@ OSCdef(\dataListener, {
                             ~bipolarSynth.set(\level, 1, \freq, 220);
                         },
                         'Zero target null', {
-                            //~nullSynth.set(\level, 1, \freq, 660);
+                            ~nullSynth.set(\level, 1, \freq, 660);
                         },
                         'Risk for overheating', {
                             ~heatSynth.set(\level, 1, \freq, 1600);

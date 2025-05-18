@@ -67,7 +67,7 @@ SynthDef(\weatherPlayer, {
     //modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
 
     // Play the buffer with modulation
-    audio = PlayBuf.ar(1, bufnum, rate, loop: 1);
+    audio = PlayBuf.ar(2, bufnum, rate, loop: 1);
 
     // Apply a simple envelope
     audio = audio * amp *EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1), doneAction: 0);
@@ -89,9 +89,18 @@ SynthDef(\temperatureSynth, { arg frequency = 220, level = 0;
 (
 //Weather sounds
 //Cant read anything because this fucking language is a fucking joke. Actually fucking sucks. You can load them together but not the entire block
-~sunshineBuffer = Buffer.read(s, "compiledSunshine.wav");
-~snowfallBuffer = Buffer.read(s, "snowfall2.wav",bufnum:1);
-~rainfallBuffer = Buffer.read(s, "rainZelda.wav");
+
+
+try {
+~sunshineBuffer = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "compiledSunshine.wav");
+~snowfallBuffer = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "snowfall2.wav");
+~rainfallBuffer = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "rainZelda.wav");
+} { |err|
+err.postln;
+	~sunshineBuffer = Buffer.read(s, "C:/Programmering/TNM113-Ljud/lab4/compiledSunshine.wav");
+	~snowfallBuffer = Buffer.read(s, "C:/Programmering/TNM113-Ljud/lab4/snowfall2.wav");
+	~rainfallBuffer = Buffer.read(s, "C:/Programmering/TNM113-Ljud/lab4/rainZelda.wav");
+};
 
 // Flaggor som håller koll på vädret
 ~sunFlag = false;
@@ -284,15 +293,17 @@ u = UserView(w, Rect(0, 0, 1024, 500))
 
 	// Calculate detune factor based on temperature
 	var detune = linlin(temperature, -20, 40, -0.8, 0.0);  // Detune from -0.8 (cold) to 0.8 (warm)
+	var detuneTwo = linlin(temperature, -20, 40, -0.2, 0.0);
+	var detuneThree = linlin(temperature, -20, 40, -0.5, 0.0);
 
     // Set the frequency of the instruments and apply the detune
     ~oboe.set(\freq, 440, \detune, detune);
-    ~violin.set(\freq, 440, \detune, detune);
-    ~viola.set(\freq, 440, \detune, detune);
-    ~cello.set(\freq, 220, \detune, detune);
+    ~violin.set(\freq, 440, \detune, detuneTwo);
+    ~viola.set(\freq, 440, \detune, detuneThree);
+    ~cello.set(\freq, 220, \detune, detuneTwo);
     ~flute.set(\freq, 440, \detune, detune);
-    ~clarinet.set(\freq, 440, \detune, detune);
-    ~trumpet.set(\freq, 440, \detune, detune);
+    ~clarinet.set(\freq, 440, \detune, detuneTwo);
+    ~trumpet.set(\freq, 440, \detune, detuneThree);
     ~horn.set(\freq, 220, \detune, detune);
 
 
