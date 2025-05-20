@@ -227,41 +227,24 @@ OSCdef(\timeListener, { arg inputmsg;
 		8, { // Morning
 			// Spela upp klockljudet som markerar de olika tidsdelarna
 			~playbell.value;
-
-			// Sätt ljudvolymen för de procedurella syntarna, vilken sedan sätts i sequencerfunktionen
-
-			~playMorning = {
-				Synth.new(\samplePlayer, [\bufnum, ~morningMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
-			};
-
-
+			~playMorning .value;
 		},
 		11, { // Lunch
 			~playbell.value;
-
-			~playLunch = {
-				Synth.new(\samplePlayer, [\bufnum, ~lunchMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
-			};
-
+			~playLunch .value;
 
 		},
 		13, { // Afternoon
 			~playbell.value;
-
-			~playAfternoon = {
-				Synth.new(\samplePlayer, [\bufnum, ~afternoonMusicSample, \bus, ~outputEffectBus.index, \level, 1]).postln;
-			};
-
+			~playAfternoon.value;
 
 		},
 		17, { // Evening
 			~playbell.value;
 
+			~playEvening.value;
 
 
-			~playEvening = {
-				Synth.new(\samplePlayer, [\bufnum, ~eveningMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
-			};
 		},
 		20, { // Happy hour
 			~playbell.value;
@@ -283,6 +266,21 @@ OSCdef(\timeListener, { arg inputmsg;
 	Synth.new(\bellSamplePlayer, [\bufnum, ~bellSample, \bus, ~outputEffectBus.index, \level, 1;]);
 };
 
+~playMorning = {
+				Synth.new(\samplePlayer, [\bufnum, ~morningMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
+};
+
+~playLunch = {
+				Synth.new(\samplePlayer, [\bufnum, ~lunchMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
+};
+
+~playAfternoon = {
+				Synth.new(\samplePlayer, [\bufnum, ~afternoonMusicSample, \bus, ~outputEffectBus.index, \level, 1]).postln;
+};
+
+~playEvening = {
+				Synth.new(\samplePlayer, [\bufnum, ~eveningMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
+};
 
 
 

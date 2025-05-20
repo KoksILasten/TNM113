@@ -360,22 +360,14 @@ void changeTemperature() {
 void sendNumberOfPersons() {
   OscMessage msg = new OscMessage("/person");
   msg.add(numberOfPersons);
-  print(numberOfPersons);
   osc.send(msg, supercollider);
   
 }
 void sendTime() {
   if (previousMinute != minutes) {
     OscMessage msg = new OscMessage("/time");
-    //Send actual time
-    /*
     msg.add(hour);
     msg.add(minutes);
-    */
-    
-    msg.add(22);
-    msg.add(00);
-    
     osc.send(msg, supercollider);
     previousMinute = minutes;
   };
