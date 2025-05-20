@@ -147,11 +147,11 @@ for (0, 2) { arg index;
 ~doorbellSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/doorbell.wav");
 
 // Other samples
-~morningMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/morningMusic.mp3");
-~lunchMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/lunchMusic.mp3");
-~afternoonMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/afternoonMusic.mp3");
-~eveningMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/eveningMusic.mp3");
-~hhMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/happyhour.mp3");
+~morningMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/morningMusic.wav");
+~lunchMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/lunchMusic.wav");
+~afternoonMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/afternoonMusic.wav");
+~eveningMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/eveningMusic.wav");
+~hhMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/happyhour.wav");
 
 // En environmentvariabel som håller koll på antal personer i lobbyn
 ~numberOfPersons = 0;
@@ -239,8 +239,6 @@ OSCdef(\timeListener, { arg inputmsg;
 		11, { // Lunch
 			~playbell.value;
 
-			~playMorning.set(\level,0);
-			~playMorning.free;
 			~playLunch = {
 				Synth.new(\samplePlayer, [\bufnum, ~lunchMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
 			};
@@ -249,10 +247,9 @@ OSCdef(\timeListener, { arg inputmsg;
 		},
 		13, { // Afternoon
 			~playbell.value;
-			~playLunch.set(\level,0);
-			~playLunch.free;
+
 			~playAfternoon = {
-				Synth.new(\samplePlayer, [\bufnum, ~afternoonMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
+				Synth.new(\samplePlayer, [\bufnum, ~afternoonMusicSample, \bus, ~outputEffectBus.index, \level, 1]).postln;
 			};
 
 
@@ -298,7 +295,9 @@ OSCdef(\personListener, { arg inputmsg;
 			Synth.new(\doorbellSamplePlayer, [\bufnum, ~doorbellSample, \bus, ~outputEffectBus.index, \level, 1]);
 			inputPersonInt = linlin(inputPerson, 0, 11, 0.3, 0.8);
 			~samplePlayer.set(\amp, inputPersonInt );
-
+			if (~numberOfPersons > 5){
+				Synth.new(\samplePlayer, [\bufnum, ~doorbellSample, \bus, ~outputEffectBus.index, \level, 1]);
+			};
 		};
 		~numberOfPersons = inputPerson;
 
