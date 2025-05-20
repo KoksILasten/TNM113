@@ -7,8 +7,6 @@ s.scope;
 s.plotTree;
 NetAddr.localAddr;
 
-Quarks.install("https://github.com/supercollider-quarks/JoshLib");
-
 // När servern är igång skickar man över en eller flera synth definitioner till serven.
 (
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
@@ -35,13 +33,13 @@ SynthDef(\doorbellSamplePlayer, { arg bus, bufnum = 0, t_gate = 0, level = 0;
 	var sound = PlayBuf.ar(
 		numChannels: 2,
 		bufnum: bufnum,
-		rate: BufRateScale.kr(bufnum),
+		rate: 0.9,//BufRateScale.kr(bufnum),
 		trigger: t_gate,
 		startPos: 0,
 		loop: 0,
 		doneAction: 2
 	);
-	var output = sound * 0.015 * level;
+	var output = sound * 0.05 * level;
 	Out.ar(bus, {output}!2);
 }).add;
 SynthDef(\bellSamplePlayer, { arg bus, bufnum = 0, level = 0;
@@ -57,6 +55,24 @@ SynthDef(\bellSamplePlayer, { arg bus, bufnum = 0, level = 0;
 	var output = sound * 0.02 * level;
 	output = BHiShelf.ar(output, freq: 1000, rs: 0.5, db: 9);
 	Out.ar(bus, {output}!2);
+}).add;
+
+SynthDef(\samplePlayer, {
+    |bufnum, amp = 0.5, rate = 0.8, modFreq = 0.25, modDepth = 0.1|
+
+    var modSignal, audio;
+
+    // Generate modulation for a subtle natural effect
+    //modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
+
+    // Play the buffer with modulation
+    audio = PlayBuf.ar(2, bufnum, rate, loop: 1);
+
+    // Apply a simple envelope
+    audio = audio * amp *EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1), doneAction: 0);
+
+    // Output to stereo
+    Out.ar(0, audio!2);
 }).add;
 
 
@@ -125,10 +141,17 @@ for (0, 2) { arg index;
 
 
 // Läs in klockljudet, ni får se över sökvägen till de ljud ni använder
-~bellSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/bell2.wav");
-// Läs in dörrklockljudet
-~doorbellSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/doorbell2.wav");
+~bellSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/bell3.wav");
 
+// Läs in dörrklockljudet
+~doorbellSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/doorbell.wav");
+
+// Other samples
+~morningMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/morningMusic.mp3");
+~lunchMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/lunchMusic.mp3");
+~afternoonMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/afternoonMusic.mp3");
+~eveningMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/eveningMusic.mp3");
+~hhMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/happyhour.mp3");
 
 // En environmentvariabel som håller koll på antal personer i lobbyn
 ~numberOfPersons = 0;
@@ -206,32 +229,47 @@ OSCdef(\timeListener, { arg inputmsg;
 			~playbell.value;
 
 			// Sätt ljudvolymen för de procedurella syntarna, vilken sedan sätts i sequencerfunktionen
-			~chordLevel = 0.25;
-			~bassLevel = 0;
+
+			~playMorning = {
+				Synth.new(\samplePlayer, [\bufnum, ~morningMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
+			};
+
+
 		},
 		11, { // Lunch
 			~playbell.value;
 
-			~chordLevel = 0.5;
-			~bassLevel = 0.25;
+			~playMorning.set(\level,0);
+			~playMorning.free;
+			~playLunch = {
+				Synth.new(\samplePlayer, [\bufnum, ~lunchMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
+			};
+
+
 		},
 		13, { // Afternoon
 			~playbell.value;
+			~playLunch.set(\level,0);
+			~playLunch.free;
+			~playAfternoon = {
+				Synth.new(\samplePlayer, [\bufnum, ~afternoonMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
+			};
 
-			~chordLevel = 0.25;
-			~bassLevel = 0.5;
+
 		},
 		17, { // Evening
 			~playbell.value;
 
-			~chordLevel = 0.5;
-			~bassLevel = 1;
+
+
+			~playEvening = {
+				Synth.new(\samplePlayer, [\bufnum, ~eveningMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
+			};
 		},
 		20, { // Happy hour
 			~playbell.value;
 
-			~chordLevel = 1;
-			~bassLevel = 1;
+
 		},
 		23, { // Closed
 			~playbell.value;
@@ -249,14 +287,21 @@ OSCdef(\timeListener, { arg inputmsg;
 };
 
 
+
+
 // Följande är en OSC-lyssnare för person-meddelanden. Meddelandet tas emot som en int (inputPerson) och om det värdet är större än ~numberOfPersons ska ett ljud spelas upp. Därefter uppdateras ~numberofPersons. Även denna synthdefinition har en doneAction på 2.
 OSCdef(\personListener, { arg inputmsg;
+	var inputPersonInt = 0;
 	if (inputmsg.size > 1) {
 		var inputPerson = inputmsg[1].asInteger;
 		if (inputPerson > ~numberOfPersons) {
-			Synth.new(\doorbellSamplePlayer, [\bufnum, ~doorbellSample, \bus, ~outputEffectBus.index, \level, 1;]);
+			Synth.new(\doorbellSamplePlayer, [\bufnum, ~doorbellSample, \bus, ~outputEffectBus.index, \level, 1]);
+			inputPersonInt = linlin(inputPerson, 0, 11, 0.3, 0.8);
+			~samplePlayer.set(\amp, inputPersonInt );
+
 		};
 		~numberOfPersons = inputPerson;
+
 	};
 }, 'person');
 
