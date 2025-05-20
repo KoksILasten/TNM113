@@ -58,7 +58,7 @@ SynthDef(\bellSamplePlayer, { arg bus, bufnum = 0, level = 0;
 }).add;
 
 SynthDef(\samplePlayer, {
-    |bufnum, amp = 0.5, rate = 0.8, modFreq = 0.25, modDepth = 0.1|
+    |bufnum, amp = 0.5, rate = 0.8, modFreq = 0.25, modDepth = 0.1, level = 0 , loop = 1|
 
     var modSignal, audio;
 
@@ -66,10 +66,10 @@ SynthDef(\samplePlayer, {
     //modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
 
     // Play the buffer with modulation
-    audio = PlayBuf.ar(2, bufnum, rate, loop: 1);
+    audio = PlayBuf.ar(2, bufnum, rate, loop: loop);
 
     // Apply a simple envelope
-    audio = audio * amp *EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1), doneAction: 0);
+	audio = audio * amp *EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1), doneAction: 0) * level.lag(5);
 
     // Output to stereo
     Out.ar(0, audio!2);
@@ -152,6 +152,8 @@ for (0, 2) { arg index;
 ~afternoonMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/afternoonMusic.wav");
 ~eveningMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/eveningMusic.wav");
 ~hhMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/happyhour.wav");
+~twoItalians = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/2ItaliansTalking.wav");
+~argItalians = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/ItaliansArguing.wav");
 
 // En environmentvariabel som håller koll på antal personer i lobbyn
 ~numberOfPersons = 0;
@@ -220,6 +222,31 @@ OSCdef(\timeListener, { arg inputmsg;
 	};
 }, 'time');
 
+	~morningSynth = Synth.new(\samplePlayer, [\bufnum, ~morningMusicSample, \bus, ~outputEffectBus.index, \level, 0]);
+
+	~lunchSynth = Synth.new(\samplePlayer, [\bufnum, ~lunchMusicSample, \bus, ~outputEffectBus.index, \level, 0]);
+
+	~afternoonSynth = Synth.new(\samplePlayer, [\bufnum, ~afternoonMusicSample, \bus, ~outputEffectBus.index, \level, 0]);
+
+	~eveningSynth = Synth.new(\samplePlayer, [\bufnum, ~eveningMusicSample, \bus, ~outputEffectBus.index, \level, 0]);
+
+	~happyhourSynth = Synth.new(\samplePlayer, [\bufnum, ~hhMusicSample, \bus, ~outputEffectBus.index, \level, 0]);
+
+~synthControllerRate = { |rate = 1.0|
+    [~morningSynth, ~lunchSynth, ~afternoonSynth, ~eveningSynth, ~happyhourSynth].do { |synth|
+        if (synth.notNil) {
+            synth.set(\rate, rate);
+        };
+    };
+};
+
+~synthControllerAmp = { |amp = 1.0|
+    [~morningSynth, ~lunchSynth, ~afternoonSynth, ~eveningSynth, ~happyhourSynth].do { |synth|
+        if (synth.notNil) {
+            synth.set(\amp, amp);
+        };
+    };
+};
 
 // Följande funktion anropas av OSC-lyssnaren som tar emot tidsinformationen
 ~hourSyncedStuff = {
@@ -227,32 +254,42 @@ OSCdef(\timeListener, { arg inputmsg;
 		8, { // Morning
 			// Spela upp klockljudet som markerar de olika tidsdelarna
 			~playbell.value;
-			~playMorning .value;
+			~morningSynth.set(\level, 1);
 		},
 		11, { // Lunch
+			~morningSynth.set(\level, 0);
+			//~morningSynth.free;
 			~playbell.value;
-			~playLunch .value;
+			~lunchSynth.set(\level, 1);
 
 		},
 		13, { // Afternoon
+			~lunchSynth.set(\level, 0);
+			//~lunchSynth.free;
 			~playbell.value;
-			~playAfternoon.value;
+			~afternoonSynth.set(\level, 1);
 
 		},
 		17, { // Evening
 			~playbell.value;
 
-			~playEvening.value;
-
+			~afternoonSynth.set(\level, 0);
+			//~afternoonSynth.free;
+			~eveningSynth.set(\level, 1);
 
 		},
 		20, { // Happy hour
 			~playbell.value;
+			~eveningSynth.set(\level, 0);
+			//~eveningSynth.free;
 
+			~happyhourSynth.set(\level, 1);
 
 		},
 		23, { // Closed
 			~playbell.value;
+			~happyhourSynth.set(\level, 0);
+			~happyhourSynth.free;
 
 			// Sätt stoppflaggan för sequencerfunktionen
 			~stopflag = true;
@@ -263,43 +300,61 @@ OSCdef(\timeListener, { arg inputmsg;
 
 // Följande funktion spelar upp klockljudet, eftersom synthdefinitionen har en doneAction på 2 tas den syntinstansen bort från servern när samplingen har spelats upp. Därför kan vi bekvämt skapa en ny instans varje gång vi spelar upp ljudet.
 ~playbell = {
-	Synth.new(\bellSamplePlayer, [\bufnum, ~bellSample, \bus, ~outputEffectBus.index, \level, 1;]);
+	Synth.new(\bellSamplePlayer, [\bufnum, ~bellSample, \bus, ~outputEffectBus.index, \level, 0]);
 };
-
-~playMorning = {
-				Synth.new(\samplePlayer, [\bufnum, ~morningMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
-};
-
-~playLunch = {
-				Synth.new(\samplePlayer, [\bufnum, ~lunchMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
-};
-
-~playAfternoon = {
-				Synth.new(\samplePlayer, [\bufnum, ~afternoonMusicSample, \bus, ~outputEffectBus.index, \level, 1]).postln;
-};
-
-~playEvening = {
-				Synth.new(\samplePlayer, [\bufnum, ~eveningMusicSample, \bus, ~outputEffectBus.index, \level, 1]);
-};
-
-
 
 // Följande är en OSC-lyssnare för person-meddelanden. Meddelandet tas emot som en int (inputPerson) och om det värdet är större än ~numberOfPersons ska ett ljud spelas upp. Därefter uppdateras ~numberofPersons. Även denna synthdefinition har en doneAction på 2.
 OSCdef(\personListener, { arg inputmsg;
-	var inputPersonInt = 0;
-	if (inputmsg.size > 1) {
-		var inputPerson = inputmsg[1].asInteger;
-		if (inputPerson > ~numberOfPersons) {
-			Synth.new(\doorbellSamplePlayer, [\bufnum, ~doorbellSample, \bus, ~outputEffectBus.index, \level, 1]);
-			inputPersonInt = linlin(inputPerson, 0, 11, 0.3, 0.8);
-			~samplePlayer.set(\amp, inputPersonInt );
-			if (~numberOfPersons > 5){
-				Synth.new(\samplePlayer, [\bufnum, ~doorbellSample, \bus, ~outputEffectBus.index, \level, 1]);
-			};
-		};
-		~numberOfPersons = inputPerson;
+    var inputPersonInt = 0;
 
-	};
+    if (inputmsg.size > 1) {
+        var inputPerson = inputmsg[1].asInteger;
+
+        if (inputPerson > ~numberOfPersons) {
+            Synth.new(\doorbellSamplePlayer, [
+                \bufnum, ~doorbellSample,
+                \bus, ~outputEffectBus.index,
+                \level, 1
+            ]);
+
+            inputPersonInt = linlin(~numberOfPersons, 0, 11, 0.3, 0.9);
+            //~samplePlayer.set(\amp, inputPersonInt);
+			~synthControllerAmp.(inputPersonInt);
+
+            ~numberOfPersons.postln;
+			inputPersonInt.postln;
+
+            if (~numberOfPersons > 4) {
+                ~twoItaliansSynth = Synth.new(\samplePlayer, [
+                    \bufnum, ~twoItalians,
+                    \bus, ~outputEffectBus.index,
+                    \level, 1,
+                    \rate, 1,
+                    \loop, 0,
+					\amp, 0.2
+                ]);
+            } {
+				~twoItaliansSynth.set(\level, 0);
+                ~twoItaliansSynth.free;
+            };
+
+            if (~numberOfPersons > 8) {
+                ~manyItaliansSynth = Synth.new(\samplePlayer, [
+                    \bufnum, ~argItalians,
+                    \bus, ~outputEffectBus.index,
+                    \level, 1,
+                    \rate, 1,
+                    \loop, 0,
+					\amp, 0.2
+                ]);
+            } {
+				~manyItaliansSynth.set(\level, 0);
+                ~manyItaliansSynth.free;
+            };
+        };
+
+        ~numberOfPersons = inputPerson;
+    };
 }, 'person');
 
 
@@ -307,8 +362,9 @@ OSCdef(\personListener, { arg inputmsg;
 OSCdef(\temperatureListener, { arg inputmsg;
 	if (inputmsg.size > 1) {
 		var inputTemperature = inputmsg[1].asFloat;
-		inputTemperature = linlin(inputTemperature, 19.7, 22.3, 0.3, 1);
+		inputTemperature = linlin(inputTemperature, 19.7, 22.3, 0.9, 1.3);
 		~outputChannel.set(\level, inputTemperature);
+		~synthControllerRate.(inputTemperature);
 	};
 }, 'temperature');
 
