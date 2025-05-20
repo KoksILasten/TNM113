@@ -4,13 +4,17 @@ s.boot; // en rad kod körs med <Shift> och <Enter>
 s.quit;
 // Start oscilloscope
 s.scope;
+s.plotTree;
+NetAddr.localAddr;
+
+Quarks.install("https://github.com/supercollider-quarks/JoshLib");
 
 // När servern är igång skickar man över en eller flera synth definitioner till serven.
 (
 // Kod inom parenteser körs med <cmd> och <Enter> på Mac eller <ctrl> och <Enter> i Windows
 
 // Synthdefinitioner som skapar helt procedurella ljud
-SynthDef(\chordSynth, { arg bus, freq, gate = 0, level = 0;
+SynthDef(\chordSynth, { arg bus, freq, gate = 0, level = 1;
 	var oscillator1 = LFTri.ar(freq, mul: 0.1);
 	var filtered = RLPF.ar(oscillator1, 5000, 0.5);
 	var envelope = EnvGen.ar(Env.adsr(attackTime: 2, decayTime: 2, sustainLevel: 0.25, releaseTime: 3, peakLevel: 0.5, curve: -4), gate);
@@ -60,7 +64,8 @@ SynthDef(\bellSamplePlayer, { arg bus, bufnum = 0, level = 0;
 SynthDef(\outputEffects, {arg inputbus, bus;
 	var input = In.ar(inputbus, numChannels: 2);
 	var reverbed = FreeVerb.ar(in: input, mix: 1, room: 0.5, damp: 0.1, mul: 1.0);
-	var echo = Greyhole.ar(in: input, delayTime: 2.5, damp: 0.5, diff: 0.8, feedback: 0.5);
+	// Ersätt Greyhole med DelayC + CombC för enklare echo-effekt:
+	var echo = CombC.ar(input, maxdelaytime: 3, delaytime: 2.5, decaytime: 3);
 	var roomEffects = reverbed + echo;
 	var output = input + (roomEffects * 0.75);
 	Out.ar(bus, output);
