@@ -1,2 +1,2 @@
 # TNM113-Labs
- Labs in course TNM113 Procedual Sound
+ Labs & project in course TNM113 Procedual Sound
