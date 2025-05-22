@@ -26,12 +26,29 @@ SynthDef(\samplePlayer, {
     Out.ar(0, audio!2);
 }).add;
 
+SynthDef(\dPadUpDownPlayer, {
+    |bufnum, amp = 0.5, rate = 0.9, modFreq = 0.25, modDepth = 0.1, level = 0 , loop = 1|
+
+    var modSignal, audio;
+
+    // Generate modulation for a subtle natural effect
+    //modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
+
+    // Play the buffer with modulation
+    audio = PlayBuf.ar(2, bufnum, rate, loop: loop);
+
+    // Apply a simple envelope
+	audio = audio * amp * EnvGen.kr(Env.perc(0.01, 0.3, 1.0, -4);
+
+    // Output to stereo
+    Out.ar(0, audio!2);
+}).add;
 )
 
 (
 //TEST. VI kommer använda dictionary när det är på riktigt.
 //load all sounds must be WAV :((
-~morningMusicSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/CementGrind.wav");
+~dpadUpDownSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadUp.wav");
 
 
 HID.closeAll;
@@ -75,7 +92,7 @@ s.waitForBoot({
 			57, { ~pressCheck.value(value, "D-PAD");
 				switch(page,
 					1, { "D-PAD UP".postln;
-						{Synth.new(\samplePlayer, [\bufnum, ~morningMusicSample, \level, 1]); }.play;
+						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1]);
 
 
 					},
@@ -84,16 +101,45 @@ s.waitForBoot({
 					5, { "D-PAD DOWN".postln;},
 				);
 			},
-			1, { ~pressCheck.value(value, "A");}, //A
-			2, { ~pressCheck.value(value, "B");}, //B
-			3, { ~pressCheck.value(value, "Y");}, //Y
-			4, { ~pressCheck.value(value, "X");}, //X
-			5, { ~pressCheck.value(value, "LB");}, //LB
-			6, { ~pressCheck.value(value, "RB");}, //RB
-			7, { ~pressCheck.value(value, "SELECT");}, //SELECT
-			8, { ~pressCheck.value(value, "START");}, //START
-			50, { ~pressCheck.value(value, "LT");}, //LT //LT och RT fungerar inte presscheck till 100% men det spelar ingen roll
-			51, { ~pressCheck.value(value, "RT");}, //RT
+			1, { ~pressCheck.value(value, "A");
+
+			}, //A
+			2, { ~pressCheck.value(value, "B");
+
+
+			}, //B
+			3, { ~pressCheck.value(value, "Y");
+
+
+			}, //Y
+			4, { ~pressCheck.value(value, "X");
+
+
+			}, //X
+			5, { ~pressCheck.value(value, "LB");
+
+
+			}, //LB
+			6, { ~pressCheck.value(value, "RB");
+
+
+			}, //RB
+			7, { ~pressCheck.value(value, "SELECT");
+
+
+			}, //SELECT
+			8, { ~pressCheck.value(value, "START");
+
+
+			}, //START
+			50, { ~pressCheck.value(value, "LT");
+
+
+			}, //LT //LT och RT fungerar inte presscheck till 100% men det spelar ingen roll
+			51, { ~pressCheck.value(value, "RT");
+
+
+			}, //RT
 		);
 
 	};
