@@ -38,11 +38,12 @@ SynthDef(\dPadUpDownPlayer, {
     audio = PlayBuf.ar(2, bufnum, rate, loop: loop);
 
     // Apply a simple envelope
-	audio = audio * amp * EnvGen.kr(Env.perc(0.01, 0.3, 1.0, -4);
+	audio = audio * amp * EnvGen.kr(Env.perc(0.1, 0.3, 1.0, -4));
 
     // Output to stereo
     Out.ar(0, audio!2);
 }).add;
+
 )
 
 (
@@ -92,13 +93,15 @@ s.waitForBoot({
 			57, { ~pressCheck.value(value, "D-PAD");
 				switch(page,
 					1, { "D-PAD UP".postln;
-						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1]);
+						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1], doneaction: 2);
 
 
 					},
 					3, { "D-PAD RIGHT".postln;},
 					7, { "D-PAD LEFT".postln;},
-					5, { "D-PAD DOWN".postln;},
+					5, { "D-PAD DOWN".postln;
+						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1], doneaction: 2);
+					},
 				);
 			},
 			1, { ~pressCheck.value(value, "A");
