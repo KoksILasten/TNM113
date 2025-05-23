@@ -20,7 +20,7 @@ SynthDef(\samplePlayer, {
 
     // Apply a simple envelope
 	//audio = audio * amp * EnvGen.kr(Env.adsr(0.01, 0.1, 0.8, 0.2, 1), doneAction: 0) * level.lag(5);
-	audio = audio * amp * EnvGen.kr(Env.perc(0.01, 1.5, 1.0, -2));
+	audio = audio * amp * EnvGen.kr(Env.perc(0.01, 0.3, 1.0, -4));
 
     // Output to stereo
     Out.ar(0, audio!2);
@@ -38,18 +38,20 @@ SynthDef(\dPadUpDownPlayer, {
     audio = PlayBuf.ar(2, bufnum, rate, loop: loop);
 
     // Apply a simple envelope
-	audio = audio * amp * EnvGen.kr(Env.perc(0.1, 0.3, 1.0, -4));
+	audio = audio * amp * EnvGen.kr(Env.perc(0.01, 0.3, 1.0, -4));
 
     // Output to stereo
     Out.ar(0, audio!2);
 }).add;
-
 )
-
 (
 //TEST. VI kommer använda dictionary när det är på riktigt.
 //load all sounds must be WAV :((
 ~dpadUpDownSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadUp.wav");
+~dpadLeftSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadL.wav");
+~dpadRightSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadR.wav");
+
+~dpadUpRightSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadR.wav");
 
 
 HID.closeAll;
@@ -74,7 +76,8 @@ s.waitForBoot({
 	HID.debug = false; //enable/disable debug mode (output to terminal)
 
 	//open controller detta är specifikt min controller använd HID.postAvailable; för att hitta din kontrollers vendorID och ProductID
-	~controller = HID.open(1118, 654);
+	//~controller = HID.open(1118, 654); //Magnus
+	~controller = HID.open(1118, 673); //Alex
 
 	if(~controller.isNil) {
         "Failed to open controller! Check IDs.".postln;
@@ -93,56 +96,56 @@ s.waitForBoot({
 			57, { ~pressCheck.value(value, "D-PAD");
 				switch(page,
 					1, { "D-PAD UP".postln;
-						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1], doneaction: 2);
+						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1]);
 
 
 					},
 					3, { "D-PAD RIGHT".postln;},
 					7, { "D-PAD LEFT".postln;},
 					5, { "D-PAD DOWN".postln;
-						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1], doneaction: 2);
-					},
+						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1]);
+						},
 				);
-			},
+			}, //A
 			1, { ~pressCheck.value(value, "A");
 
-			}, //A
+			}, //B
 			2, { ~pressCheck.value(value, "B");
 
 
-			}, //B
+			}, //Y
 			3, { ~pressCheck.value(value, "Y");
 
 
-			}, //Y
+			}, //X
 			4, { ~pressCheck.value(value, "X");
 
 
-			}, //X
+			}, //LB
 			5, { ~pressCheck.value(value, "LB");
 
 
-			}, //LB
+			}, //RB
 			6, { ~pressCheck.value(value, "RB");
 
 
-			}, //RB
+			}, //SELECT
 			7, { ~pressCheck.value(value, "SELECT");
 
 
-			}, //SELECT
+			}, //START
 			8, { ~pressCheck.value(value, "START");
 
 
-			}, //START
+			}, //LT
 			50, { ~pressCheck.value(value, "LT");
 
 
-			}, //LT //LT och RT fungerar inte presscheck till 100% men det spelar ingen roll
+			}, //RT och LT fungerar inte presscheck till 100% men det spelar ingen roll
 			51, { ~pressCheck.value(value, "RT");
 
 
-			}, //RT
+			},
 		);
 
 	};
