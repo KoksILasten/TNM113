@@ -38,16 +38,41 @@ SynthDef(\dPadUpDownPlayer, {
     audio = PlayBuf.ar(2, bufnum, rate, loop: loop);
 
     // Apply a simple envelope
-	audio = audio * amp * EnvGen.kr(Env.perc(0.01, 0.3, 1.0, -4));
+
+	audio = audio * amp * EnvGen.kr(Env.perc(0.01, 0.3, 1.0, -4), doneAction: 2);
+	audio = LPF.ar(audio, 1500);
 
     // Output to stereo
     Out.ar(0, audio!2);
 }).add;
+
+SynthDef(\dPadLeftRightPlayer, {
+    |bufnum, amp = 0.5, rate = 0.9, modFreq = 0.25, modDepth = 0.1, level = 0 , loop = 1|
+
+    var modSignal, audio;
+
+    // Generate modulation for a subtle natural effect
+    //modSignal = SinOsc.kr(modFreq, 0, modDepth, 1);
+
+    // Play the buffer with modulation
+    audio = PlayBuf.ar(2, bufnum, rate, loop: loop);
+
+    // Apply a simple envelope
+
+	audio = audio * amp * EnvGen.kr(Env.perc(0.01, 0.3, 1.0, -4), doneAction: 2);
+	//audio = LPF.ar(audio, 1500);
+
+    // Output to stereo
+    Out.ar(0, audio!2);
+}).add;
+
+
 )
 (
 //TEST. VI kommer använda dictionary när det är på riktigt.
 //load all sounds must be WAV :((
-~dpadUpDownSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadUp.wav");
+~dpadUpSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dun2.wav");
+~dpadDownSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadUp.wav");
 ~dpadLeftSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadL.wav");
 ~dpadRightSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadR.wav");
 
@@ -76,13 +101,11 @@ s.waitForBoot({
 	HID.debug = false; //enable/disable debug mode (output to terminal)
 
 	//open controller detta är specifikt min controller använd HID.postAvailable; för att hitta din kontrollers vendorID och ProductID
-	//~controller = HID.open(1118, 654); //Magnus
-	~controller = HID.open(1118, 673); //Alex
-
-	if(~controller.isNil) {
-        "Failed to open controller! Check IDs.".postln;
-    } {
-        "Controller connected successfully!".postln;
+	try{
+		~controller = HID.open(1118, 654); //Magnus
+		//~controller = HID.open(1118, 673); //Alex
+	}{
+		"Failed to open controller! Check IDs.".postln;
 	};
 
 
@@ -91,6 +114,8 @@ s.waitForBoot({
 		"value: %, page: %, usage: %, elid: %".format(value, page, usage, elid).postln;
 		"".postln;
 
+
+
 		//Standard Xinput (I think) iaf min kontroller
 		switch(usage,
 			57, { ~pressCheck.value(value, "D-PAD");
@@ -98,16 +123,22 @@ s.waitForBoot({
 					1, { "D-PAD UP".postln;
 						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1]);
 
-
 					},
-					3, { "D-PAD RIGHT".postln;},
-					7, { "D-PAD LEFT".postln;},
+					3, { "D-PAD RIGHT".postln;
+						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadRightSample, \level, 1, \amp, 1]);
+					},
+					7, { "D-PAD LEFT".postln;
+						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadLeftSample, \level, 1, \amp, 1]);
+					},
 					5, { "D-PAD DOWN".postln;
 						Synth.new(\dPadUpDownPlayer, [\bufnum, ~dpadUpDownSample, \level, 1, \amp, 1]);
 						},
 				);
 			}, //A
-			1, { ~pressCheck.value(value, "A");
+			1, { ~pressCheck.value(value, "A"
+
+
+			);
 
 			}, //B
 			2, { ~pressCheck.value(value, "B");
@@ -129,7 +160,7 @@ s.waitForBoot({
 			6, { ~pressCheck.value(value, "RB");
 
 
-			}, //SELECT
+			}, //SELECT 3X modifier
 			7, { ~pressCheck.value(value, "SELECT");
 
 
