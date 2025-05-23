@@ -76,7 +76,7 @@ SynthDef(\dPadLeftRightPlayer, {
 ~dpadLeftSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadL.wav");
 ~dpadRightSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadR.wav");
 
-~loadSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/earConLong.wav");
+~dpadUpRightSample = Buffer.read(s, thisProcess.nowExecutingPath.dirname++"/sounds/completedSoundClips/dpadR.wav");
 
 
 HID.closeAll;
