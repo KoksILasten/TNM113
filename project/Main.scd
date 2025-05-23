@@ -79,9 +79,9 @@ SynthDef(\x3Player, { |amp = 0.5|
 	pulse = LFPulse.kr(Line.kr(22, 10, 0.5), width: 0.5) * 3;
 
     // Descending tone
-    tone = SinOsc.ar(Line.kr(220, 60, 0.7)) * env;
+    tone = SinOsc.ar(Line.kr(220, 60, 0.5)) * env;
 	toneTwo = SinOsc.ar(Line.kr(110, 622.25, 0.5)) * pulse * env;
-	toneThree = SinOsc.ar(Line.kr(110, 622.25, 0.5), 0.1) * pulse * env;
+	toneThree = SinOsc.ar(Line.kr(110, 622.25, 0.6), phase: 0.4) * pulse * env;
 	// Mix tone
 	tone = (tone + toneTwo + toneThree) /3;
 
@@ -136,7 +136,7 @@ s.waitForBoot({
 
 	//HID.postAvailable;
 	HID.findAvailable; // List connected devices
-	HID.debug = false; //enable/disable debug mode (output to terminal)
+	HID.debug = false; // enable/disable debug mode (output to terminal)
 
 	// open controller detta är specifikt min controller använd HID.postAvailable; för att hitta din kontrollers vendorID och ProductID
 	try{
