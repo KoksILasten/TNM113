@@ -78,7 +78,7 @@ SynthDef(\x3Player, { |amp = 0.5|
 	env = EnvGen.kr(Env.perc(0.01, 0.8, curve: -4), doneAction: 2);
 	pulse = LFPulse.kr(Line.kr(22, 10, 0.5), width: 0.5) * 3;
 
-    // Descending tone
+    // Acending tone
     tone = SinOsc.ar(Line.kr(220, 60, 0.5)) * env;
 	toneTwo = SinOsc.ar(Line.kr(110, 622.25, 0.5)) * pulse * env;
 	toneThree = SinOsc.ar(Line.kr(110, 622.25, 0.6), phase: 0.4) * pulse * env;
@@ -204,7 +204,7 @@ s.waitForBoot({
 			}, //Y
 			4, { ~pressCheck.value(value, "Y");
 				if(value == 1){
-					~loadingSynth = Synth.new(\musicPlayer, [\bufnum, ~loadingSample, \level, 1, \amp, 0.3, \decay, 0.2, \lpfcutoff, 8000 ]);
+					~loadingSynth = Synth.new(\musicPlayer, [\bufnum, ~loadingSample, \level, 1, \amp, 0.3, \decay, 0.2, \lpfcutoff, 8000, \loop, 1]);
 				}{
 					~loadingSynth.free;
 				};
